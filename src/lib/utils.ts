@@ -19,8 +19,8 @@ export const MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 export const PHOTO_CATEGORIES = ["meal", "body", "progress"] as const;
 
 export const MACRO_COLORS = {
-  calories: "#f97316",
-  protein: "#3b82f6",
-  fat: "#eab308",
-  carbs: "#22c55e",
+  calories: "#8b7355",
+  protein: "#748873",
+  fat: "#D1A980",
+  carbs: "#5f6f5e",
 } as const;

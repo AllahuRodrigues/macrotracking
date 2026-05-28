@@ -159,7 +159,29 @@ export function getDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_photos_date ON photos(date);
   `);
 
+  migrateSchema(db);
+
   return db;
+}
+
+function migrateSchema(database: Database.Database) {
+  const alters = [
+    "ALTER TABLE supplements ADD COLUMN tracks_macros INTEGER DEFAULT 0",
+    "ALTER TABLE supplements ADD COLUMN macro_calories REAL DEFAULT 0",
+    "ALTER TABLE supplements ADD COLUMN macro_protein REAL DEFAULT 0",
+    "ALTER TABLE supplements ADD COLUMN macro_fat REAL DEFAULT 0",
+    "ALTER TABLE supplements ADD COLUMN macro_carbs REAL DEFAULT 0",
+    "ALTER TABLE supplements ADD COLUMN allows_quantity INTEGER DEFAULT 0",
+    "ALTER TABLE supplement_intakes ADD COLUMN quantity INTEGER DEFAULT 1",
+    "ALTER TABLE user_profile ADD COLUMN ethnicity TEXT",
+  ];
+  for (const sql of alters) {
+    try {
+      database.exec(sql);
+    } catch {
+      // column already exists
+    }
+  }
 }
 
 export function getUploadsDir() {
@@ -182,11 +204,11 @@ export function getFoodEntries(date?: string): FoodEntry[] {
 }
 
 export function createFoodEntry(
-  data: Omit<FoodEntry, "id" | "created_at">
+  data: Omit<FoodEntry, "id" | "created_at"> & { id?: string }
 ): FoodEntry {
   const database = getDb();
   const entry: FoodEntry = {
-    id: uuidv4(),
+    id: data.id ?? uuidv4(),
     ...data,
     created_at: new Date().toISOString(),
   };
@@ -597,7 +619,8 @@ export function getSupplementIntakesForDate(date: string): SupplementIntake[] {
 export function toggleSupplementIntake(
   date: string,
   supplementId: string,
-  taken: boolean
+  taken: boolean,
+  quantity = 1
 ): SupplementIntake | null {
   const db = getDb();
   const existing = db
@@ -606,19 +629,20 @@ export function toggleSupplementIntake(
 
   if (taken) {
     if (existing) {
-      db.prepare("UPDATE supplement_intakes SET taken = 1 WHERE id = ?").run(existing.id);
-      return { ...existing, taken: 1 };
+      db.prepare("UPDATE supplement_intakes SET taken = 1, quantity = ? WHERE id = ?").run(quantity, existing.id);
+      return { ...existing, taken: 1, quantity };
     }
     const entry: SupplementIntake = {
       id: uuidv4(),
       date,
       supplement_id: supplementId,
       taken: 1,
+      quantity,
       created_at: new Date().toISOString(),
     };
     db.prepare(
-      `INSERT INTO supplement_intakes (id, date, supplement_id, taken, created_at)
-       VALUES (@id, @date, @supplement_id, @taken, @created_at)`
+      `INSERT INTO supplement_intakes (id, date, supplement_id, taken, quantity, created_at)
+       VALUES (@id, @date, @supplement_id, @taken, @quantity, @created_at)`
     ).run(entry);
     return entry;
   }
@@ -627,6 +651,20 @@ export function toggleSupplementIntake(
     db.prepare("DELETE FROM supplement_intakes WHERE id = ?").run(existing.id);
   }
   return null;
+}
+
+export function setSupplementQuantity(
+  date: string,
+  supplementId: string,
+  quantity: number
+): SupplementIntake | null {
+  const db = getDb();
+  const existing = db
+    .prepare("SELECT * FROM supplement_intakes WHERE date = ? AND supplement_id = ?")
+    .get(date, supplementId) as SupplementIntake | undefined;
+  if (!existing) return null;
+  db.prepare("UPDATE supplement_intakes SET quantity = ? WHERE id = ?").run(quantity, existing.id);
+  return { ...existing, quantity };
 }
 
 export function markAllSupplementsForDate(date: string, supplementIds: string[]): void {

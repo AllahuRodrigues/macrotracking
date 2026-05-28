@@ -5,8 +5,11 @@ import type { PhotoEntry } from "@/lib/types";
 import { PHOTO_CATEGORIES } from "@/lib/utils";
 import { PhotoUpload, PhotoGallery } from "@/components/PhotoUpload";
 import { Card } from "@/components/ui";
+import { GuestBanner } from "@/components/GuestBanner";
+import { useAccess } from "@/context/AccessProvider";
 
 export default function PhotosPage() {
+  const { canWrite } = useAccess();
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
   const [filter, setFilter] = useState<string>("all");
 
@@ -26,7 +29,9 @@ export default function PhotosPage() {
         </p>
       </div>
 
-      <PhotoUpload onUploaded={load} defaultCategory="body" />
+      <GuestBanner />
+
+      {canWrite && <PhotoUpload onUploaded={load} defaultCategory="body" />}
 
       <Card
         title="Gallery"
@@ -42,10 +47,14 @@ export default function PhotosPage() {
         <PhotoGallery
           photos={photos}
           filter={filter === "all" ? undefined : filter}
-          onDelete={async (id) => {
-            await fetch(`/api/photos/${id}`, { method: "DELETE" });
-            load();
-          }}
+          onDelete={
+            canWrite
+              ? async (id) => {
+                  await fetch(`/api/photos/${id}`, { method: "DELETE" });
+                  load();
+                }
+              : undefined
+          }
         />
       </Card>
     </div>

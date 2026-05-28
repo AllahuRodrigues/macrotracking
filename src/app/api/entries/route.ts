@@ -5,9 +5,13 @@ import {
   getFoodEntries,
   updateFoodEntry,
 } from "@/lib/db";
+import { reconcileSupplementMacrosForDate } from "@/lib/supplement-macros-sync";
 
 export async function GET(req: NextRequest) {
   const date = req.nextUrl.searchParams.get("date") ?? undefined;
+  if (date) {
+    await reconcileSupplementMacrosForDate(date);
+  }
   const entries = await getFoodEntries(date);
   return NextResponse.json(entries);
 }

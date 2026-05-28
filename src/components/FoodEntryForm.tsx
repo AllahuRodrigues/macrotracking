@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, X, Check } from "lucide-react";
 import type { FoodEntry, MealType } from "@/lib/types";
 import { MEAL_TYPES } from "@/lib/utils";
+import { isSupplementMacroEntry } from "@/lib/supplement-macros-config";
 import { Button, Input, Select, Textarea, Card } from "./ui";
 
 interface FoodEntryFormProps {
@@ -184,8 +185,8 @@ export function FoodEntryForm({ date, onSaved, editEntry, onCancelEdit }: FoodEn
 
 interface FoodEntryListProps {
   entries: FoodEntry[];
-  onEdit: (entry: FoodEntry) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (entry: FoodEntry) => void;
+  onDelete?: (id: string) => void;
 }
 
 export function FoodEntryList({ entries, onEdit, onDelete }: FoodEntryListProps) {
@@ -236,25 +237,38 @@ export function FoodEntryList({ entries, onEdit, onDelete }: FoodEntryListProps)
                   className="group flex items-center justify-between rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2.5"
                 >
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{entry.name}</p>
+                    <p className="truncate text-sm font-medium">
+                      {entry.name}
+                      {isSupplementMacroEntry(entry.notes) && (
+                        <span className="ml-1.5 rounded bg-[var(--accent-warm)]/20 px-1.5 py-0.5 text-[10px] font-normal text-[var(--accent-warm)]">
+                          supplement
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-[var(--muted)]">
                       {Math.round(entry.calories)} kcal · {Math.round(entry.protein)}g P · {Math.round(entry.fat)}g F · {Math.round(entry.carbs)}g C
                     </p>
                   </div>
+                  {(onEdit || onDelete) && !isSupplementMacroEntry(entry.notes) && (
                   <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    {onEdit && (
                     <button
                       onClick={() => onEdit(entry)}
                       className="rounded p-1.5 text-[var(--muted)] hover:bg-[var(--card-border)] hover:text-[var(--foreground)]"
                     >
                       <Pencil size={14} />
                     </button>
+                    )}
+                    {onDelete && (
                     <button
                       onClick={() => onDelete(entry.id)}
-                      className="rounded p-1.5 text-[var(--muted)] hover:bg-red-600/20 hover:text-red-400"
+                      className="rounded p-1.5 text-[var(--muted)] hover:bg-red-100 hover:text-red-700"
                     >
                       <Trash2 size={14} />
                     </button>
+                    )}
                   </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -10,16 +10,31 @@ import { MacroBar } from "@/components/MacroRing";
 import { Card, Button } from "@/components/ui";
 import { DayTypeToggle } from "@/components/DayTypeToggle";
 import { useDayType } from "@/lib/useDayType";
+import { GuestBanner } from "@/components/GuestBanner";
+import { useAccess } from "@/context/AccessProvider";
 
 export default function MealsPage() {
+  const { canWrite } = useAccess();
   const [date, setDate] = useState(todayISO());
   const [entries, setEntries] = useState<FoodEntry[]>([]);
+  const [stats, setStats] = useState({
+    calories: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    from_meals: { protein: 0 },
+    from_supplements: { protein: 0 },
+  });
   const [editEntry, setEditEntry] = useState<FoodEntry | null>(null);
   const { dayType, setDayType, goals } = useDayType();
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/entries?date=${date}`);
-    setEntries(await res.json());
+    const [entriesRes, statsRes] = await Promise.all([
+      fetch(`/api/entries?date=${date}`),
+      fetch(`/api/stats?date=${date}`),
+    ]);
+    setEntries(await entriesRes.json());
+    setStats(await statsRes.json());
   }, [date]);
 
   useEffect(() => { load(); }, [load]);
@@ -30,15 +45,12 @@ export default function MealsPage() {
     setDate(d.toISOString().split("T")[0]);
   }
 
-  const totals = entries.reduce(
-    (t, e) => ({
-      calories: t.calories + e.calories,
-      protein: t.protein + e.protein,
-      fat: t.fat + e.fat,
-      carbs: t.carbs + e.carbs,
-    }),
-    { calories: 0, protein: 0, fat: 0, carbs: 0 }
-  );
+  const totals = {
+    calories: stats.calories ?? 0,
+    protein: stats.protein ?? 0,
+    fat: stats.fat ?? 0,
+    carbs: stats.carbs ?? 0,
+  };
 
   return (
     <div className="space-y-6">
@@ -63,13 +75,21 @@ export default function MealsPage() {
 
       <DayTypeToggle dayType={dayType} setDayType={setDayType} />
 
-      <Card title="Daily Totals">
+      <GuestBanner />
+
+      <Card title="Daily Totals (Food + Supplements)">
         <div className="mb-2 flex justify-between text-lg font-bold">
           <span>{Math.round(totals.calories)} kcal</span>
           <span className="text-sm font-normal text-[var(--muted)]">
             P {Math.round(totals.protein)}g · F {Math.round(totals.fat)}g · C {Math.round(totals.carbs)}g
           </span>
         </div>
+        {(stats.from_supplements?.protein ?? 0) > 0 && (
+          <p className="mb-2 text-xs text-[var(--accent-warm)]">
+            Includes {Math.round(stats.from_supplements.protein)}g protein from supplements
+            (Quest bar, whey, etc.)
+          </p>
+        )}
         <div className="space-y-2">
           <MacroBar label="Protein" current={totals.protein} goal={goals.protein} color={MACRO_COLORS.protein} />
           <MacroBar label="Fat" current={totals.fat} goal={goals.fat} color={MACRO_COLORS.fat} />
@@ -77,21 +97,27 @@ export default function MealsPage() {
         </div>
       </Card>
 
-      <FoodEntryForm
-        date={date}
-        onSaved={load}
-        editEntry={editEntry}
-        onCancelEdit={() => setEditEntry(null)}
-      />
+      {canWrite && (
+        <FoodEntryForm
+          date={date}
+          onSaved={load}
+          editEntry={editEntry}
+          onCancelEdit={() => setEditEntry(null)}
+        />
+      )}
 
-      <Card title="Food Log">
+      <Card title="Food Log (Meals + Supplement Macros)">
         <FoodEntryList
           entries={entries}
-          onEdit={setEditEntry}
-          onDelete={async (id) => {
-            await fetch(`/api/entries/${id}`, { method: "DELETE" });
-            load();
-          }}
+          onEdit={canWrite ? setEditEntry : undefined}
+          onDelete={
+            canWrite
+              ? async (id) => {
+                  await fetch(`/api/entries/${id}`, { method: "DELETE" });
+                  load();
+                }
+              : undefined
+          }
         />
       </Card>
     </div>

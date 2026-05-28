@@ -101,6 +101,12 @@ export interface Supplement {
   frequency?: SupplementFrequency;
   notes?: string;
   active: number;
+  tracks_macros?: number;
+  macro_calories?: number;
+  macro_protein?: number;
+  macro_fat?: number;
+  macro_carbs?: number;
+  allows_quantity?: number;
   created_at: string;
 }
 
@@ -109,6 +115,7 @@ export interface SupplementIntake {
   date: string;
   supplement_id: string;
   taken: number; // 0 | 1
+  quantity?: number;
   created_at: string;
 }
 
@@ -124,6 +131,7 @@ export interface UserProfile {
   name?: string;
   age?: number;
   height?: string;
+  ethnicity?: string;
   goal?: string;
   avatar_filename?: string;
   target_calories?: number;

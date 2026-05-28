@@ -44,11 +44,11 @@ export async function getFoodEntries(date?: string): Promise<FoodEntry[]> {
 }
 
 export async function createFoodEntry(
-  data: Omit<FoodEntry, "id" | "created_at">
+  data: Omit<FoodEntry, "id" | "created_at"> & { id?: string }
 ): Promise<FoodEntry> {
   const supabase = getSupabase();
   const entry: FoodEntry = {
-    id: uuidv4(),
+    id: data.id ?? uuidv4(),
     ...data,
     notes: data.notes ?? undefined,
     created_at: new Date().toISOString(),
@@ -626,7 +626,8 @@ export async function getSupplementIntakesForDate(date: string): Promise<Supplem
 export async function toggleSupplementIntake(
   date: string,
   supplementId: string,
-  taken: boolean
+  taken: boolean,
+  quantity = 1
 ): Promise<SupplementIntake | null> {
   const supabase = getSupabase();
   const { data: existing, error: fetchError } = await supabase
@@ -641,16 +642,17 @@ export async function toggleSupplementIntake(
     if (existing) {
       const { error } = await supabase
         .from("supplement_intakes")
-        .update({ taken: 1 })
+        .update({ taken: 1, quantity })
         .eq("id", existing.id);
       if (error) throw error;
-      return { ...existing, taken: 1 } as SupplementIntake;
+      return { ...existing, taken: 1, quantity } as SupplementIntake;
     }
     const entry: SupplementIntake = {
       id: uuidv4(),
       date,
       supplement_id: supplementId,
       taken: 1,
+      quantity,
       created_at: new Date().toISOString(),
     };
     const { error } = await supabase.from("supplement_intakes").insert(entry);
@@ -663,6 +665,29 @@ export async function toggleSupplementIntake(
     if (error) throw error;
   }
   return null;
+}
+
+export async function setSupplementQuantity(
+  date: string,
+  supplementId: string,
+  quantity: number
+): Promise<SupplementIntake | null> {
+  const supabase = getSupabase();
+  const { data: existing, error: fetchError } = await supabase
+    .from("supplement_intakes")
+    .select("*")
+    .eq("date", date)
+    .eq("supplement_id", supplementId)
+    .maybeSingle();
+  if (fetchError) throw fetchError;
+  if (!existing) return null;
+
+  const { error } = await supabase
+    .from("supplement_intakes")
+    .update({ quantity })
+    .eq("id", existing.id);
+  if (error) throw error;
+  return { ...existing, quantity } as SupplementIntake;
 }
 
 export async function markAllSupplementsForDate(

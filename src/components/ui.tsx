@@ -30,10 +30,10 @@ export function Button({
   variant?: "primary" | "secondary" | "danger" | "ghost";
 }) {
   const variants = {
-    primary: "bg-[var(--accent)] text-black hover:bg-[var(--accent-dim)]",
-    secondary: "bg-[var(--card-border)] text-[var(--foreground)] hover:bg-[#333]",
-    danger: "bg-red-600/20 text-red-400 hover:bg-red-600/30",
-    ghost: "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--card-border)]",
+    primary: "bg-[var(--accent)] text-white hover:bg-[var(--accent-dim)]",
+    secondary: "bg-[var(--surface)] text-[var(--foreground)] hover:bg-[var(--card-border)]",
+    danger: "bg-red-100 text-red-700 hover:bg-red-200",
+    ghost: "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface)]",
   };
 
   return (

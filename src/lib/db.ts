@@ -119,10 +119,15 @@ export async function deleteSupplement(id: string) {
 export async function getSupplementIntakesForDate(date: string) {
   return remote() ? supabase.getSupplementIntakesForDate(date) : sqlite.getSupplementIntakesForDate(date);
 }
-export async function toggleSupplementIntake(date: string, supplementId: string, taken: boolean) {
+export async function toggleSupplementIntake(date: string, supplementId: string, taken: boolean, quantity = 1) {
   return remote()
-    ? supabase.toggleSupplementIntake(date, supplementId, taken)
-    : sqlite.toggleSupplementIntake(date, supplementId, taken);
+    ? supabase.toggleSupplementIntake(date, supplementId, taken, quantity)
+    : sqlite.toggleSupplementIntake(date, supplementId, taken, quantity);
+}
+export async function setSupplementQuantity(date: string, supplementId: string, quantity: number) {
+  return remote()
+    ? supabase.setSupplementQuantity(date, supplementId, quantity)
+    : sqlite.setSupplementQuantity(date, supplementId, quantity);
 }
 export async function markAllSupplementsForDate(date: string, supplementIds: string[]) {
   return remote()

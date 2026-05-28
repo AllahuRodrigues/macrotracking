@@ -2,10 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { format, parseISO, subDays } from "date-fns";
-import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Pill } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Pill, Minus, Plus } from "lucide-react";
 import type { Supplement, SupplementDaySummary } from "@/lib/types";
 import { groupSupplementsByTiming, isSupplementDueToday } from "@/lib/supplement-utils";
+import {
+  getSupplementMacroConfig,
+  supplementAllowsQuantity,
+  supplementTracksMacros,
+} from "@/lib/supplement-macros-config";
 import { todayISO } from "@/lib/utils";
+import { useAccess } from "@/context/AccessProvider";
 import { Card, Button } from "./ui";
 
 interface IntakeData {
@@ -13,6 +19,7 @@ interface IntakeData {
   supplements: Supplement[];
   due_supplements?: Supplement[];
   taken_ids: string[];
+  quantities?: Record<string, number>;
   taken: number;
   total: number;
 }
@@ -20,13 +27,68 @@ interface IntakeData {
 interface SupplementDailyTrackerProps {
   initialDate?: string;
   compact?: boolean;
+  onChange?: () => void;
 }
 
-export function SupplementDailyTracker({ initialDate, compact }: SupplementDailyTrackerProps) {
+function MacroHint({ supplement, quantity }: { supplement: Supplement; quantity: number }) {
+  const config = getSupplementMacroConfig(supplement);
+  if (!config) return null;
+  const qty = quantity || 1;
+  return (
+    <span className="text-[10px] text-[var(--accent-warm)]">
+      +{config.protein * qty}g P · {config.carbs * qty}g C
+    </span>
+  );
+}
+
+function ScoopControl({
+  supplementId,
+  quantity,
+  onChange,
+  disabled,
+}: {
+  supplementId: string;
+  quantity: number;
+  onChange: (id: string, qty: number) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div
+      className="flex items-center gap-1 rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-1"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        disabled={disabled || quantity <= 1}
+        onClick={() => onChange(supplementId, quantity - 1)}
+        className="rounded p-1 text-[var(--muted)] hover:bg-[var(--surface)] disabled:opacity-40"
+      >
+        <Minus size={12} />
+      </button>
+      <span className="min-w-[2rem] text-center text-xs font-semibold">{quantity}</span>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onChange(supplementId, quantity + 1)}
+        className="rounded p-1 text-[var(--muted)] hover:bg-[var(--surface)] disabled:opacity-40"
+      >
+        <Plus size={12} />
+      </button>
+      <span className="pr-1 text-[10px] text-[var(--muted)]">scoops</span>
+    </div>
+  );
+}
+
+export function SupplementDailyTracker({ initialDate, compact, onChange }: SupplementDailyTrackerProps) {
+  const { canWrite } = useAccess();
   const [date, setDate] = useState(initialDate ?? todayISO());
   const [data, setData] = useState<IntakeData | null>(null);
   const [history, setHistory] = useState<SupplementDaySummary[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialDate) setDate(initialDate);
+  }, [initialDate]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -51,6 +113,8 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
   }
 
   async function toggle(supplementId: string, currentlyTaken: boolean) {
+    if (!canWrite) return;
+    const qty = data?.quantities?.[supplementId] ?? 1;
     await fetch("/api/supplement-intake", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -59,13 +123,31 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
         date,
         supplement_id: supplementId,
         taken: !currentlyTaken,
+        quantity: qty,
       }),
     });
-    load();
+    await load();
+    onChange?.();
+  }
+
+  async function setQuantity(supplementId: string, quantity: number) {
+    if (!canWrite) return;
+    await fetch("/api/supplement-intake", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "set_quantity",
+        date,
+        supplement_id: supplementId,
+        quantity,
+      }),
+    });
+    await load();
+    onChange?.();
   }
 
   async function markAllTaken() {
-    if (!data) return;
+    if (!canWrite || !data) return;
     const due = data.due_supplements ?? data.supplements.filter((s) => isSupplementDueToday(s.frequency, date));
     await fetch("/api/supplement-intake", {
       method: "POST",
@@ -76,10 +158,12 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
         supplement_ids: due.map((s) => s.id),
       }),
     });
-    load();
+    await load();
+    onChange?.();
   }
 
   const takenSet = new Set(data?.taken_ids ?? []);
+  const quantities = data?.quantities ?? {};
   const dueIds = new Set(
     (data?.due_supplements ?? data?.supplements.filter((s) => isSupplementDueToday(s.frequency, date)) ?? []).map((s) => s.id)
   );
@@ -87,13 +171,76 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
   const allDone = data ? data.taken === data.total && data.total > 0 : false;
   const groups = data ? groupSupplementsByTiming(data.supplements) : [];
 
-  // Build 14-day strip (most recent first in history, we want chronological for display)
   const stripDays = Array.from({ length: 14 }, (_, i) => {
     const d = subDays(new Date(date + "T12:00:00"), 13 - i);
     const iso = d.toISOString().split("T")[0];
     const h = history.find((x) => x.date === iso);
     return { date: iso, pct: h?.pct ?? 0, taken: h?.taken ?? 0, total: h?.total ?? data?.total ?? 0 };
   });
+
+  function renderSupplementRow(s: Supplement, compactRow = false) {
+    const taken = takenSet.has(s.id);
+    const due = dueIds.has(s.id);
+    const qty = quantities[s.id] ?? 1;
+    const tracksMacros = supplementTracksMacros(s);
+    const allowsQty = supplementAllowsQuantity(s);
+
+    return (
+      <div
+        key={s.id}
+        className={`flex w-full items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${
+          !due
+            ? "border-[var(--card-border)]/60 bg-[var(--background)]/50 opacity-60"
+            : taken
+            ? "border-[var(--accent)]/30 bg-[var(--accent)]/5"
+            : "border-[var(--card-border)] bg-[var(--background)]"
+        } ${compactRow ? "text-sm" : ""}`}
+      >
+        <button
+          type="button"
+          onClick={() => due && canWrite && toggle(s.id, taken)}
+          disabled={!due || !canWrite}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-default"
+        >
+          {taken
+            ? <CheckCircle2 size={compactRow ? 16 : 20} className="text-[var(--accent)] shrink-0" />
+            : <Circle size={compactRow ? 16 : 20} className={`shrink-0 ${due ? "text-[var(--muted)]" : "text-[var(--card-border)]"}`} />}
+          <div className="min-w-0 flex-1">
+            <p className={`font-medium ${taken ? "line-through opacity-70" : ""}`}>
+              {s.name}
+              {s.dose && !compactRow && (
+                <span className="ml-1.5 text-xs font-normal text-[var(--muted)]">{s.dose}</span>
+              )}
+            </p>
+            {!compactRow && (
+              <p className="text-xs text-[var(--muted)]">
+                {s.brand && `${s.brand} · `}{s.timing}
+                {tracksMacros && taken && (
+                  <span className="ml-2">
+                    <MacroHint supplement={s} quantity={qty} />
+                  </span>
+                )}
+              </p>
+            )}
+            {compactRow && tracksMacros && taken && (
+              <MacroHint supplement={s} quantity={qty} />
+            )}
+            {!due && s.frequency === "every_2_days" && (
+              <span className="text-xs text-[var(--accent-warm)]"> · skip today</span>
+            )}
+          </div>
+        </button>
+        {taken && allowsQty && (
+          <ScoopControl
+            supplementId={s.id}
+            quantity={qty}
+            onChange={setQuantity}
+            disabled={!canWrite}
+          />
+        )}
+      </div>
+    );
+  }
 
   if (compact) {
     return (
@@ -105,6 +252,9 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
           </a>
         }
       >
+        {!canWrite && (
+          <p className="mb-2 text-xs text-[var(--accent-warm)]">Guest mode — view only</p>
+        )}
         {data && (
           <>
             <div className="mb-3 flex items-center justify-between">
@@ -113,32 +263,15 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
               </span>
               <span className="text-sm text-[var(--muted)]">{pct}% complete</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-[var(--card-border)] mb-3">
+            <div className="mb-3 h-2 overflow-hidden rounded-full bg-[var(--surface)]">
               <div
                 className="h-full rounded-full bg-[var(--accent)] transition-all"
                 style={{ width: `${pct}%` }}
               />
             </div>
             <div className="space-y-1">
-              {(data.due_supplements ?? data.supplements.filter((s) => isSupplementDueToday(s.frequency, date))).slice(0, 5).map((s) => {
-                const taken = takenSet.has(s.id);
-                return (
-                  <button
-                    key={s.id}
-                    onClick={() => toggle(s.id, taken)}
-                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-[var(--card-border)]/50"
-                  >
-                    {taken
-                      ? <CheckCircle2 size={16} className="text-[var(--accent)] shrink-0" />
-                      : <Circle size={16} className="text-[var(--muted)] shrink-0" />}
-                    <span className={taken ? "line-through opacity-60" : ""}>{s.name}</span>
-                  </button>
-                );
-              })}
-              {data.supplements.length > 5 && (
-                <p className="text-xs text-[var(--muted)] pl-7">
-                  +{Math.max(0, (data.due_supplements?.length ?? data.total) - 5)} more due today
-                </p>
+              {(data.due_supplements ?? data.supplements.filter((s) => isSupplementDueToday(s.frequency, date))).slice(0, 6).map((s) =>
+                renderSupplementRow(s, true)
               )}
             </div>
           </>
@@ -149,7 +282,6 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
 
   return (
     <div className="space-y-4">
-      {/* Date nav */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold">Daily Supplement Intake</h2>
@@ -169,11 +301,16 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
         </div>
       </div>
 
-      {/* Progress */}
+      {!canWrite && (
+        <p className="rounded-lg bg-[var(--accent-warm)]/15 px-3 py-2 text-sm text-[var(--foreground)]">
+          Guest mode — you can view but not log supplements.
+        </p>
+      )}
+
       <Card>
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${allDone ? "bg-[var(--accent)]/15" : "bg-[var(--card-border)]"}`}>
+            <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${allDone ? "bg-[var(--accent)]/15" : "bg-[var(--surface)]"}`}>
               <Pill size={24} className={allDone ? "text-[var(--accent)]" : "text-[var(--muted)]"} />
             </div>
             <div>
@@ -181,29 +318,25 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
                 {data?.taken ?? 0}
                 <span className="text-lg font-normal text-[var(--muted)]"> / {data?.total ?? 0}</span>
               </p>
-              <p className="text-sm text-[var(--muted)] mt-0.5">
+              <p className="mt-0.5 text-sm text-[var(--muted)]">
                 {allDone ? "All supplements taken ✓" : `${pct}% complete`}
               </p>
             </div>
           </div>
-          {!allDone && data && data.total > 0 && (
+          {canWrite && !allDone && data && data.total > 0 && (
             <Button variant="secondary" onClick={markAllTaken} className="!text-xs">
               Mark all taken
             </Button>
           )}
         </div>
-        <div className="h-3 overflow-hidden rounded-full bg-[var(--card-border)]">
+        <div className="h-3 overflow-hidden rounded-full bg-[var(--surface)]">
           <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${pct}%`,
-              backgroundColor: allDone ? "var(--accent)" : pct >= 50 ? "#3b82f6" : "#f97316",
-            }}
+            className="h-full rounded-full transition-all duration-500 bg-[var(--accent)]"
+            style={{ width: `${pct}%` }}
           />
         </div>
       </Card>
 
-      {/* 14-day history strip */}
       <Card title="Last 14 Days">
         <div className="grid grid-cols-7 gap-1.5 sm:grid-cols-14">
           {stripDays.map((d) => {
@@ -212,6 +345,7 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
             return (
               <button
                 key={d.date}
+                type="button"
                 onClick={() => setDate(d.date)}
                 title={`${d.date}: ${d.taken}/${d.total} (${d.pct}%)`}
                 className={`flex flex-col items-center rounded-lg border p-1.5 transition-colors ${
@@ -229,27 +363,18 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
                 <div
                   className={`mt-1 h-1.5 w-full rounded-full ${
                     !hasData
-                      ? "bg-[var(--card-border)]"
+                      ? "bg-[var(--surface)]"
                       : d.pct === 100
                       ? "bg-[var(--accent)]"
-                      : d.pct >= 50
-                      ? "bg-blue-400"
-                      : "bg-orange-400"
+                      : "bg-[var(--accent-warm)]"
                   }`}
                 />
               </button>
             );
           })}
         </div>
-        <div className="mt-2 flex gap-4 text-[10px] text-[var(--muted)]">
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[var(--accent)]" /> 100%</span>
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-400" /> 50%+</span>
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-orange-400" /> Partial</span>
-          <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[var(--card-border)]" /> None</span>
-        </div>
       </Card>
 
-      {/* Checklist by timing */}
       {loading ? (
         <Card><p className="py-8 text-center text-sm text-[var(--muted)]">Loading…</p></Card>
       ) : (
@@ -268,40 +393,7 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
                 </span>
               </div>
               <div className="space-y-1">
-                {supplements.map((s) => {
-                  const taken = takenSet.has(s.id);
-                  const due = dueIds.has(s.id);
-                  return (
-                    <button
-                      key={s.id}
-                      onClick={() => due && toggle(s.id, taken)}
-                      disabled={!due}
-                      className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${
-                        !due
-                          ? "border-[var(--card-border)]/50 bg-[var(--background)]/50 opacity-50 cursor-default"
-                          : taken
-                          ? "border-[var(--accent)]/30 bg-[var(--accent)]/5"
-                          : "border-[var(--card-border)] bg-[var(--background)] hover:border-[var(--muted)]"
-                      }`}
-                    >
-                      {taken
-                        ? <CheckCircle2 size={20} className="text-[var(--accent)] shrink-0" />
-                        : <Circle size={20} className={`shrink-0 ${due ? "text-[var(--muted)]" : "text-[var(--card-border)]"}`} />}
-                      <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-medium ${taken ? "line-through opacity-70" : ""}`}>
-                          {s.name}
-                          {s.dose && <span className="ml-1.5 text-xs font-normal text-[var(--muted)]">{s.dose}</span>}
-                          {!due && s.frequency === "every_2_days" && (
-                            <span className="ml-1.5 text-xs font-normal text-amber-400">Skip today (every 2 days)</span>
-                          )}
-                        </p>
-                        <p className="text-xs text-[var(--muted)]">
-                          {s.brand && `${s.brand} · `}{s.timing}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
+                {supplements.map((s) => renderSupplementRow(s))}
               </div>
             </Card>
           );

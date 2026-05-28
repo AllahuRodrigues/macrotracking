@@ -147,7 +147,7 @@ export function PhotoUpload({ onUploaded, defaultCategory = "body" }: PhotoUploa
 
 interface PhotoGalleryProps {
   photos: PhotoEntry[];
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
   filter?: string;
 }
 
@@ -204,6 +204,7 @@ export function PhotoGallery({ photos, onDelete, filter }: PhotoGalleryProps) {
               <p className="text-[10px] text-gray-400 truncate">{photo.caption}</p>
             )}
           </div>
+          {onDelete && (
           <button
             onClick={() => onDelete(photo.id)}
             className="absolute right-2 top-2 rounded-lg bg-red-600/80 p-1.5 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
@@ -211,6 +212,7 @@ export function PhotoGallery({ photos, onDelete, filter }: PhotoGalleryProps) {
           >
             <Trash2 size={14} />
           </button>
+          )}
         </div>
       ))}
     </div>

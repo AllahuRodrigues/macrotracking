@@ -12,13 +12,22 @@ import { FoodEntryList } from "@/components/FoodEntryForm";
 import { DayTypeToggle } from "@/components/DayTypeToggle";
 import { SupplementDailyTracker } from "@/components/SupplementDailyTracker";
 import { useDayType } from "@/lib/useDayType";
+import { useAccess } from "@/context/AccessProvider";
 
 export default function DashboardPage() {
   const [date, setDate] = useState(todayISO());
   const [entries, setEntries] = useState<FoodEntry[]>([]);
-  const [summary, setSummary] = useState({ calories: 0, protein: 0, fat: 0, carbs: 0 });
+  const [summary, setSummary] = useState({
+    calories: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    fromMeals: { protein: 0, calories: 0 },
+    fromSupplements: { protein: 0, calories: 0 },
+  });
   const [latestBody, setLatestBody] = useState<BodyMetric | null>(null);
   const { dayType, setDayType, goals } = useDayType();
+  const { canWrite } = useAccess();
 
   const load = useCallback(async () => {
     const [entriesRes, statsRes, bodyRes] = await Promise.all([
@@ -33,6 +42,14 @@ export default function DashboardPage() {
       protein: s.protein ?? 0,
       fat: s.fat ?? 0,
       carbs: s.carbs ?? 0,
+      fromMeals: {
+        protein: s.from_meals?.protein ?? 0,
+        calories: s.from_meals?.calories ?? 0,
+      },
+      fromSupplements: {
+        protein: s.from_supplements?.protein ?? 0,
+        calories: s.from_supplements?.calories ?? 0,
+      },
     });
     const body = await bodyRes.json();
     setLatestBody(body[0] ?? null);
@@ -84,6 +101,14 @@ export default function DashboardPage() {
             <span className="text-lg font-normal text-[var(--muted)]"> / {goals.calories}</span>
           </p>
           <p className="text-xs text-[var(--muted)]">{Math.round(remaining.calories)} kcal remaining</p>
+          {(summary.fromSupplements.protein > 0 || summary.fromMeals.protein > 0) && (
+            <p className="mt-1 text-xs text-[var(--accent-warm)]">
+              Protein: {Math.round(summary.fromMeals.protein)}g food
+              {summary.fromSupplements.protein > 0 && (
+                <> + {Math.round(summary.fromSupplements.protein)}g supplements (bar, whey, etc.)</>
+              )}
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <MacroRing label="Protein" current={summary.protein} goal={goals.protein} color={MACRO_COLORS.protein} />
@@ -128,23 +153,29 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <SupplementDailyTracker compact initialDate={date} />
+      <SupplementDailyTracker compact initialDate={date} onChange={load} />
 
       <Card
-        title="Today's Meals"
+        title="Today's Intake (Food + Supplements)"
         action={
-          <Link href="/meals">
-            <Button variant="secondary" className="!py-1 !text-xs">Manage</Button>
-          </Link>
+          canWrite ? (
+            <Link href="/meals">
+              <Button variant="secondary" className="!py-1 !text-xs">Manage</Button>
+            </Link>
+          ) : null
         }
       >
         <FoodEntryList
           entries={entries}
           onEdit={() => {}}
-          onDelete={async (id) => {
-            await fetch(`/api/entries/${id}`, { method: "DELETE" });
-            load();
-          }}
+          onDelete={
+            canWrite
+              ? async (id) => {
+                  await fetch(`/api/entries/${id}`, { method: "DELETE" });
+                  load();
+                }
+              : undefined
+          }
         />
       </Card>
     </div>

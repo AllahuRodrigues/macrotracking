@@ -48,6 +48,12 @@ CREATE TABLE IF NOT EXISTS supplements (
   frequency TEXT DEFAULT 'daily',
   notes TEXT,
   active INTEGER NOT NULL DEFAULT 1,
+  tracks_macros INTEGER DEFAULT 0,
+  macro_calories DOUBLE PRECISION DEFAULT 0,
+  macro_protein DOUBLE PRECISION DEFAULT 0,
+  macro_fat DOUBLE PRECISION DEFAULT 0,
+  macro_carbs DOUBLE PRECISION DEFAULT 0,
+  allows_quantity INTEGER DEFAULT 0,
   created_at TEXT NOT NULL
 );
 
@@ -56,6 +62,7 @@ CREATE TABLE IF NOT EXISTS supplement_intakes (
   date TEXT NOT NULL,
   supplement_id TEXT NOT NULL,
   taken INTEGER NOT NULL DEFAULT 1,
+  quantity INTEGER DEFAULT 1,
   created_at TEXT NOT NULL,
   UNIQUE(date, supplement_id)
 );
@@ -65,6 +72,7 @@ CREATE TABLE IF NOT EXISTS user_profile (
   name TEXT,
   age INTEGER,
   height TEXT,
+  ethnicity TEXT,
   goal TEXT,
   avatar_filename TEXT,
   target_calories INTEGER,
