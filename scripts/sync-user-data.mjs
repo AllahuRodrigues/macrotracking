@@ -39,7 +39,23 @@ const supabase = createClient(url, key, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
+const INBODY_DATE = "2026-05-22";
 const TODAY = "2026-05-28";
+
+const INBODY_BODY_ROW = {
+  date: INBODY_DATE,
+  weight_lbs: 189.6,
+  body_fat_pct: 24.9,
+  muscle_mass_lbs: 83,
+  skeletal_muscle_lbs: 85.1,
+  bmi: 29.7,
+  visceral_fat: 75.1,
+  inbody_score: 88,
+  body_water_pct: 73.2,
+  bmr: 1819,
+  notes:
+    "InBody 580 — 05/22/2026 11:57. Score 88. D-Type above average. Phase angle 7.1°. FFMI 23.5. Target: -13 lb fat → ~174 lb @ 14–16% BF. Trunk fat primary target.",
+};
 
 const SUPPLEMENT_UPDATES = [
   {
@@ -144,13 +160,13 @@ async function main() {
     name: "Rodrigues",
     age: 23,
     height: "5′6.5″",
-    goal: "Cut — 187 lb → 174–176 lb @ 14–16% BF (8–10 weeks · 1.5 lb/week)",
+    goal: "Cut — 189.6 lb → 174 lb @ 14–16% BF (lose 13 lb fat, keep muscle)",
     target_calories: 2250,
     target_protein: 200,
     target_fat: 61,
     target_carbs: 200,
     notes:
-      "Black male, age 23, 5′6.5″. InBody Score 88. Upper body dominant. Main target: trunk fat. Current: 189.6 lb / 25% BF. Fitness SF trainer. PPL Mon–Sat + 1hr treadmill daily.",
+      "Black male, 23, 5′6.5″. InBody Score 88 (05/22/2026). Excellent muscle base — not skinny fat. Upper body dominant; main fat-loss target is trunk/waist. SMM 85.1 lb. Cut/recomp: keep muscle, drop ~13 lb fat. PPL Mon–Sat + 1hr treadmill daily.",
     updated_at: new Date().toISOString(),
   };
 
@@ -158,7 +174,25 @@ async function main() {
   if (profileErr) console.warn("  profile:", profileErr.message);
   else console.log("  ✓ profile updated");
 
-  // Body metric for today
+  // InBody scan (05/22/2026)
+  const { data: inbodyRow } = await supabase
+    .from("body_metrics")
+    .select("id")
+    .eq("date", INBODY_DATE)
+    .maybeSingle();
+
+  if (inbodyRow) {
+    await supabase.from("body_metrics").update(INBODY_BODY_ROW).eq("id", inbodyRow.id);
+  } else {
+    await supabase.from("body_metrics").insert({
+      id: uuidv4(),
+      ...INBODY_BODY_ROW,
+      created_at: new Date().toISOString(),
+    });
+  }
+  console.log("  ✓ InBody scan: 05/22/2026 — 189.6 lb / 24.9% BF / score 88");
+
+  // Latest weigh-in
   const { data: existingBody } = await supabase
     .from("body_metrics")
     .select("id")

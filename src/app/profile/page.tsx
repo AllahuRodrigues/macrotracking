@@ -11,6 +11,8 @@ import { getImageUrl } from "@/lib/storage";
 import type { BodyMetric } from "@/lib/types";
 import { Card, Button, Input, Select, Textarea } from "@/components/ui";
 import { SupplementDailyTracker } from "@/components/SupplementDailyTracker";
+import { InBodyReportCard } from "@/components/InBodyReportCard";
+import { INBODY_REPORT, INBODY_SCAN_DATE } from "@/lib/inbody-report";
 
 const SUPP_CATEGORIES: { value: SupplementCategory; label: string }[] = [
   { value: "vitamin", label: "Vitamin" },
@@ -178,7 +180,10 @@ export default function ProfilePage() {
                 <div>
                   <h2 className="text-xl font-bold">{profile?.name ?? "—"}</h2>
                   <p className="text-sm text-[var(--muted)]">
-                    {profile?.age ? `${profile.age} yrs` : ""} {profile?.height ? `· ${profile.height}` : ""}
+                    {profile?.age ? `${profile.age} yrs` : ""}
+                    {profile?.height ? ` · ${profile.height}` : ""}
+                    {profile?.ethnicity ? ` · ${profile.ethnicity}` : ""}
+                    {" · Male"}
                   </p>
                 </div>
                 <Button variant="ghost" onClick={() => setEditingProfile(true)}>
@@ -220,68 +225,18 @@ export default function ProfilePage() {
         )}
       </Card>
 
-      {/* ── InBody Summary ── */}
-      {latestBody && (
-        <Card title={`InBody Results — ${latestBody.date}`}>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
-            <StatTile label="InBody Score" value={latestBody.inbody_score != null ? String(latestBody.inbody_score) : "—"} accent />
+      {/* ── Full InBody Report ── */}
+      <InBodyReportCard />
+
+      {/* Latest weigh-in if newer than scan */}
+      {latestBody && latestBody.date !== INBODY_SCAN_DATE && (
+        <Card title={`Latest Weigh-In — ${latestBody.date}`}>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatTile label="Weight" value={latestBody.weight_lbs != null ? `${latestBody.weight_lbs} lb` : "—"} />
-            <StatTile label="Body Fat" value={latestBody.body_fat_pct != null ? `${latestBody.body_fat_pct}%` : "—"} sub="20.9% official" />
-            <StatTile label="Skeletal Muscle" value={latestBody.skeletal_muscle_lbs != null ? `${latestBody.skeletal_muscle_lbs} lb` : "—"} />
-            <StatTile label="Muscle Mass" value={latestBody.muscle_mass_lbs != null ? `${latestBody.muscle_mass_lbs} lb` : "—"} />
-            <StatTile label="BMI" value={latestBody.bmi != null ? String(latestBody.bmi) : "—"} />
-            <StatTile label="Visceral Fat" value={latestBody.visceral_fat != null ? `${latestBody.visceral_fat} cm²` : "—"} sub="Level 7–8" />
-            <StatTile label="BMR" value={latestBody.bmr != null ? `${latestBody.bmr} kcal` : "—"} />
-            <StatTile label="TBW/FFM" value={latestBody.body_water_pct != null ? `${latestBody.body_water_pct}%` : "—"} />
-          </div>
-
-          {latestBody.notes && (
-            <div className="mt-3 rounded-lg bg-[var(--background)] p-3 text-xs text-[var(--muted)] leading-relaxed">
-              {latestBody.notes}
-            </div>
-          )}
-
-          <div className="mt-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Segmental Lean Mass</p>
-            <div className="grid grid-cols-5 gap-2 text-xs">
-              {[
-                { label: "Trunk", value: "65.3 lb", pct: "113.8%", good: true },
-                { label: "L. Arm", value: "8.82 lb", pct: "122.7%", good: true },
-                { label: "R. Arm", value: "8.58 lb", pct: "119.3%", good: true },
-                { label: "L. Leg", value: "19.91 lb", pct: "99.5%", good: false },
-                { label: "R. Leg", value: "19.97 lb", pct: "99.8%", good: false },
-              ].map((seg) => (
-                <div key={seg.label} className="rounded-lg border border-[var(--card-border)] bg-[var(--background)] p-2 text-center">
-                  <p className="text-[var(--muted)]">{seg.label}</p>
-                  <p className="font-semibold">{seg.value}</p>
-                  <p className={seg.good ? "text-[var(--accent)]" : "text-[var(--muted)]"}>{seg.pct}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-3">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Segmental Fat Mass</p>
-            <div className="grid grid-cols-5 gap-2 text-xs">
-              {[
-                { label: "Trunk", value: "22.0 lb", pct: "252%", high: true },
-                { label: "L. Arm", value: "2.0 lb", pct: "167%", high: true },
-                { label: "R. Arm", value: "2.2 lb", pct: "172%", high: true },
-                { label: "L. Leg", value: "5.1 lb", pct: "140%", high: false },
-                { label: "R. Leg", value: "4.9 lb", pct: "139%", high: false },
-              ].map((seg) => (
-                <div key={seg.label} className="rounded-lg border border-[var(--card-border)] bg-[var(--background)] p-2 text-center">
-                  <p className="text-[var(--muted)]">{seg.label}</p>
-                  <p className="font-semibold">{seg.value}</p>
-                  <p className={seg.high ? "text-amber-400" : "text-[var(--muted)]"}>{seg.pct}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-3 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5 p-3">
-            <p className="text-xs font-semibold text-[var(--accent)] uppercase tracking-wide mb-1">Target (per InBody report)</p>
-            <p className="text-sm">Lose <span className="font-bold text-[var(--accent)]">13 lb fat</span> · Keep muscle · Target ~<span className="font-bold">174 lb</span> @ 14–16% BF</p>
+            <StatTile label="Body Fat" value={latestBody.body_fat_pct != null ? `${latestBody.body_fat_pct}%` : "—"} />
+            {latestBody.notes && (
+              <p className="col-span-full text-xs text-[var(--muted)]">{latestBody.notes}</p>
+            )}
           </div>
         </Card>
       )}
@@ -352,9 +307,13 @@ export default function ProfilePage() {
         <div className="mb-4 rounded-xl border border-[var(--accent)]/25 bg-[var(--accent)]/5 p-4">
           <div className="flex items-center gap-2 mb-2">
             <TrendingDown size={16} className="text-[var(--accent)]" />
-            <p className="font-semibold text-[var(--accent)]">187 lb → 174–176 lb @ 14–16% BF</p>
+            <p className="font-semibold text-[var(--accent)]">
+              {INBODY_REPORT.control.startWeightLb} lb → {INBODY_REPORT.control.targetWeightLb} lb @ {INBODY_REPORT.control.targetBodyFatPct} BF
+            </p>
           </div>
-          <p className="text-xs text-[var(--muted)]">~1.5 lb/week · 750 cal/day deficit · Maintenance ~2,800–3,000 kcal</p>
+          <p className="text-xs text-[var(--muted)]">
+            Lose {INBODY_REPORT.control.suggestedFatLossLb} lb fat · keep muscle · ~1.5 lb/week · Maintenance {INBODY_REPORT.comprehensive.maintenanceEstimate}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 mb-4">
@@ -407,19 +366,19 @@ export default function ProfilePage() {
 
         <div className="mt-4 grid grid-cols-3 gap-3 text-center text-xs">
           <div className="rounded-lg border border-[var(--card-border)] bg-[var(--background)] p-2">
-            <p className="text-[var(--muted)]">Start</p>
-            <p className="font-bold text-base">~187 lb</p>
-            <p className="text-[var(--muted)]">23–24% BF</p>
+            <p className="text-[var(--muted)]">Start (InBody)</p>
+            <p className="font-bold text-base">{INBODY_REPORT.control.startWeightLb} lb</p>
+            <p className="text-[var(--muted)]">{INBODY_REPORT.obesityAnalysis.percentBodyFat}% BF</p>
           </div>
           <div className="rounded-lg border border-[var(--accent)]/30 bg-[var(--accent)]/5 p-2">
             <p className="text-[var(--muted)]">Timeline</p>
             <p className="font-bold text-base text-[var(--accent)]">8–10 wks</p>
-            <p className="text-[var(--muted)]">1.5 lb/week</p>
+            <p className="text-[var(--muted)]">−{INBODY_REPORT.control.suggestedFatLossLb} lb fat</p>
           </div>
           <div className="rounded-lg border border-[var(--card-border)] bg-[var(--background)] p-2">
             <p className="text-[var(--muted)]">Target</p>
-            <p className="font-bold text-base">174–176 lb</p>
-            <p className="text-[var(--muted)]">14–16% BF</p>
+            <p className="font-bold text-base">{INBODY_REPORT.control.targetWeightLb} lb</p>
+            <p className="text-[var(--muted)]">{INBODY_REPORT.control.targetBodyFatPct} BF</p>
           </div>
         </div>
       </Card>
