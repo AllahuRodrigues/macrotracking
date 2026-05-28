@@ -1,65 +1,149 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState, useCallback } from "react";
+import { format, parseISO } from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import type { FoodEntry, BodyMetric } from "@/lib/types";
+import { MACRO_COLORS, todayISO } from "@/lib/utils";
+import { MacroRing, MacroBar } from "@/components/MacroRing";
+import { Card, Button } from "@/components/ui";
+import { FoodEntryList } from "@/components/FoodEntryForm";
+import { DayTypeToggle } from "@/components/DayTypeToggle";
+import { useDayType } from "@/lib/useDayType";
+
+export default function DashboardPage() {
+  const [date, setDate] = useState(todayISO());
+  const [entries, setEntries] = useState<FoodEntry[]>([]);
+  const [summary, setSummary] = useState({ calories: 0, protein: 0, fat: 0, carbs: 0 });
+  const [latestBody, setLatestBody] = useState<BodyMetric | null>(null);
+  const { dayType, setDayType, goals } = useDayType();
+
+  const load = useCallback(async () => {
+    const [entriesRes, statsRes, bodyRes] = await Promise.all([
+      fetch(`/api/entries?date=${date}`),
+      fetch(`/api/stats?date=${date}`),
+      fetch("/api/body?limit=1"),
+    ]);
+    setEntries(await entriesRes.json());
+    const s = await statsRes.json();
+    setSummary({
+      calories: s.calories ?? 0,
+      protein: s.protein ?? 0,
+      fat: s.fat ?? 0,
+      carbs: s.carbs ?? 0,
+    });
+    const body = await bodyRes.json();
+    setLatestBody(body[0] ?? null);
+  }, [date]);
+
+  useEffect(() => { load(); }, [load]);
+
+  function shiftDate(days: number) {
+    const d = new Date(date + "T12:00:00");
+    d.setDate(d.getDate() + days);
+    setDate(d.toISOString().split("T")[0]);
+  }
+
+  const remaining = {
+    calories: Math.max(0, goals.calories - summary.calories),
+    protein: Math.max(0, goals.protein - summary.protein),
+    fat: Math.max(0, goals.fat - summary.fat),
+    carbs: Math.max(0, goals.carbs - summary.carbs),
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-[var(--muted)]">
+            {format(parseISO(date), "EEEE, MMMM d, yyyy")}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" onClick={() => shiftDate(-1)}><ChevronLeft size={18} /></Button>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="rounded-lg border border-[var(--card-border)] bg-[var(--card)] px-2 py-1.5 text-sm"
+          />
+          <Button variant="ghost" onClick={() => shiftDate(1)}><ChevronRight size={18} /></Button>
         </div>
-      </main>
+      </div>
+
+      <DayTypeToggle dayType={dayType} setDayType={setDayType} />
+
+      <Card className="!p-6">
+        <div className="mb-4 text-center">
+          <p className="text-sm text-[var(--muted)]">Calories Today</p>
+          <p className="text-4xl font-bold" style={{ color: MACRO_COLORS.calories }}>
+            {Math.round(summary.calories)}
+            <span className="text-lg font-normal text-[var(--muted)]"> / {goals.calories}</span>
+          </p>
+          <p className="text-xs text-[var(--muted)]">{Math.round(remaining.calories)} kcal remaining</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <MacroRing label="Protein" current={summary.protein} goal={goals.protein} color={MACRO_COLORS.protein} />
+          <MacroRing label="Fat" current={summary.fat} goal={goals.fat} color={MACRO_COLORS.fat} />
+          <MacroRing label="Carbs" current={summary.carbs} goal={goals.carbs} color={MACRO_COLORS.carbs} />
+          <MacroRing label="Calories" current={summary.calories} goal={goals.calories} unit="kcal" color={MACRO_COLORS.calories} />
+        </div>
+      </Card>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card title="Macro Breakdown">
+          <div className="space-y-3">
+            <MacroBar label="Protein" current={summary.protein} goal={goals.protein} color={MACRO_COLORS.protein} />
+            <MacroBar label="Fat" current={summary.fat} goal={goals.fat} color={MACRO_COLORS.fat} />
+            <MacroBar label="Carbs" current={summary.carbs} goal={goals.carbs} color={MACRO_COLORS.carbs} />
+          </div>
+        </Card>
+
+        <Card title="Latest Body Reading">
+          {latestBody ? (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {latestBody.weight_lbs != null && (
+                <div><p className="text-[var(--muted)] text-xs">Weight</p><p className="font-semibold">{latestBody.weight_lbs} lbs</p></div>
+              )}
+              {latestBody.body_fat_pct != null && (
+                <div><p className="text-[var(--muted)] text-xs">Body Fat</p><p className="font-semibold">{latestBody.body_fat_pct}%</p></div>
+              )}
+              {latestBody.muscle_mass_lbs != null && (
+                <div><p className="text-[var(--muted)] text-xs">Muscle Mass</p><p className="font-semibold">{latestBody.muscle_mass_lbs} lbs</p></div>
+              )}
+              {latestBody.inbody_score != null && (
+                <div><p className="text-[var(--muted)] text-xs">InBody Score</p><p className="font-semibold">{latestBody.inbody_score}</p></div>
+              )}
+              <p className="col-span-2 text-xs text-[var(--muted)]">{latestBody.date}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-[var(--muted)]">No body readings yet.</p>
+          )}
+          <Link href="/body" className="mt-3 inline-block text-sm text-[var(--accent)] hover:underline">
+            Log body metrics →
+          </Link>
+        </Card>
+      </div>
+
+      <Card
+        title="Today's Meals"
+        action={
+          <Link href="/meals">
+            <Button variant="secondary" className="!py-1 !text-xs">Manage</Button>
+          </Link>
+        }
+      >
+        <FoodEntryList
+          entries={entries}
+          onEdit={() => {}}
+          onDelete={async (id) => {
+            await fetch(`/api/entries/${id}`, { method: "DELETE" });
+            load();
+          }}
+        />
+      </Card>
     </div>
   );
 }

@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MacroTrack
+
+Personal macro, body composition, and photo tracking app.
+
+## Features
+
+- **Meals** — CRUD food entries with calories, protein, fat, carbs by meal type
+- **Body / InBody** — Weight, body fat %, muscle mass, skeletal muscle, BMI, visceral fat, InBody score, BMR
+- **Photos** — Upload meal, body, and progress photos
+- **Stats** — Charts for daily macros, weight, and body composition trends
+- **Dashboard** — Today's macro rings, breakdown, and latest body reading
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Data is stored locally in SQLite (`data/macro-tracking.db`). Photos are saved to `public/uploads/`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## May 28 Breakfast (pre-seeded)
 
-## Learn More
+Your breakfast is already logged for **2026-05-28**:
 
-To learn more about Next.js, take a look at the following resources:
+| Item | kcal | P | F | C |
+|------|------|---|---|---|
+| 3 large eggs | 210 | 18g | 15g | 1g |
+| 1 tbsp olive oil | 120 | 0g | 14g | 0g |
+| 2 egg whites | 34 | 7g | 0g | 0g |
+| 50% more protein milk (5 tbsp) | 40 | 4g | 1.5g | 2g |
+| Oikos Triple Zero | 95 | 15g | 0g | 5g |
+| **Total** | **499** | **44g** | **30.5g** | **8g** |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 16 · React 19 · TypeScript
+- Tailwind CSS 4
+- SQLite (better-sqlite3)
+- Recharts
