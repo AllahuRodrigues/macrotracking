@@ -7,7 +7,7 @@ export async function PUT(
 ) {
   const { id } = await params;
   const data = await req.json();
-  const updated = updateSupplement(id, data);
+  const updated = await updateSupplement(id, data);
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(updated);
 }
@@ -17,6 +17,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  deleteSupplement(id);
+  await deleteSupplement(id);
   return NextResponse.json({ ok: true });
 }

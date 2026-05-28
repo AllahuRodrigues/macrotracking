@@ -10,11 +10,11 @@ export async function GET(req: NextRequest) {
   const days = parseInt(req.nextUrl.searchParams.get("days") ?? "30");
 
   if (date) {
-    const summary = getMacroSummaryForDate(date);
+    const summary = await getMacroSummaryForDate(date);
     return NextResponse.json(summary);
   }
 
-  const macros = getDailyMacroSummaries(days);
-  const body = getBodyMetrics(days);
+  const macros = await getDailyMacroSummaries(days);
+  const body = await getBodyMetrics(days);
   return NextResponse.json({ macros, body });
 }

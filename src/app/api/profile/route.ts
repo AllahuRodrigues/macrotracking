@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-import { v4 as uuidv4 } from "uuid";
-import { getUserProfile, upsertUserProfile, getUploadsDir } from "@/lib/db";
+import { getUserProfile, upsertUserProfile } from "@/lib/db";
+import { saveUploadedFile } from "@/lib/upload";
 
 export async function GET() {
-  return NextResponse.json(getUserProfile());
+  return NextResponse.json(await getUserProfile());
 }
 
 export async function PUT(req: NextRequest) {
@@ -21,19 +19,15 @@ export async function PUT(req: NextRequest) {
     }
 
     if (file) {
-      const ext = path.extname(file.name) || ".jpg";
-      const filename = `profile-avatar${ext}`;
-      const uploadsDir = getUploadsDir();
-      const buffer = Buffer.from(await file.arrayBuffer());
-      fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+      const { filename } = await saveUploadedFile(file, "avatars");
       data.avatar_filename = filename;
     }
 
-    const profile = upsertUserProfile(data as Parameters<typeof upsertUserProfile>[0]);
+    const profile = await upsertUserProfile(data as Parameters<typeof upsertUserProfile>[0]);
     return NextResponse.json(profile);
   }
 
   const body = await req.json();
-  const profile = upsertUserProfile(body);
+  const profile = await upsertUserProfile(body);
   return NextResponse.json(profile);
 }

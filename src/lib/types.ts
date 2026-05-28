@@ -89,6 +89,8 @@ export type SupplementCategory =
   | "protein"
   | "other";
 
+export type SupplementFrequency = "daily" | "every_2_days" | "weekly";
+
 export interface Supplement {
   id: string;
   name: string;
@@ -96,6 +98,7 @@ export interface Supplement {
   dose?: string;
   category: SupplementCategory;
   timing?: string;
+  frequency?: SupplementFrequency;
   notes?: string;
   active: number;
   created_at: string;

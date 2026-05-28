@@ -4,13 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { format, parseISO, subDays } from "date-fns";
 import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Pill } from "lucide-react";
 import type { Supplement, SupplementDaySummary } from "@/lib/types";
-import { groupSupplementsByTiming } from "@/lib/supplement-utils";
+import { groupSupplementsByTiming, isSupplementDueToday } from "@/lib/supplement-utils";
 import { todayISO } from "@/lib/utils";
 import { Card, Button } from "./ui";
 
 interface IntakeData {
   date: string;
   supplements: Supplement[];
+  due_supplements?: Supplement[];
   taken_ids: string[];
   taken: number;
   total: number;
@@ -65,19 +66,23 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
 
   async function markAllTaken() {
     if (!data) return;
+    const due = data.due_supplements ?? data.supplements.filter((s) => isSupplementDueToday(s.frequency, date));
     await fetch("/api/supplement-intake", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "mark_all",
         date,
-        supplement_ids: data.supplements.map((s) => s.id),
+        supplement_ids: due.map((s) => s.id),
       }),
     });
     load();
   }
 
   const takenSet = new Set(data?.taken_ids ?? []);
+  const dueIds = new Set(
+    (data?.due_supplements ?? data?.supplements.filter((s) => isSupplementDueToday(s.frequency, date)) ?? []).map((s) => s.id)
+  );
   const pct = data && data.total > 0 ? Math.round((data.taken / data.total) * 100) : 0;
   const allDone = data ? data.taken === data.total && data.total > 0 : false;
   const groups = data ? groupSupplementsByTiming(data.supplements) : [];
@@ -115,7 +120,7 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
               />
             </div>
             <div className="space-y-1">
-              {data.supplements.slice(0, 5).map((s) => {
+              {(data.due_supplements ?? data.supplements.filter((s) => isSupplementDueToday(s.frequency, date))).slice(0, 5).map((s) => {
                 const taken = takenSet.has(s.id);
                 return (
                   <button
@@ -131,7 +136,9 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
                 );
               })}
               {data.supplements.length > 5 && (
-                <p className="text-xs text-[var(--muted)] pl-7">+{data.supplements.length - 5} more</p>
+                <p className="text-xs text-[var(--muted)] pl-7">
+                  +{Math.max(0, (data.due_supplements?.length ?? data.total) - 5)} more due today
+                </p>
               )}
             </div>
           </>
@@ -247,8 +254,9 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
         <Card><p className="py-8 text-center text-sm text-[var(--muted)]">Loading…</p></Card>
       ) : (
         groups.map(({ slot, icon, supplements }) => {
-          const slotTaken = supplements.filter((s) => takenSet.has(s.id)).length;
-          const slotDone = slotTaken === supplements.length;
+          const dueInSlot = supplements.filter((s) => dueIds.has(s.id));
+          const slotTaken = dueInSlot.filter((s) => takenSet.has(s.id)).length;
+          const slotDone = dueInSlot.length > 0 && slotTaken === dueInSlot.length;
           return (
             <Card key={slot}>
               <div className="mb-3 flex items-center justify-between">
@@ -256,29 +264,36 @@ export function SupplementDailyTracker({ initialDate, compact }: SupplementDaily
                   {icon} {slot}
                 </h3>
                 <span className={`text-xs font-medium ${slotDone ? "text-[var(--accent)]" : "text-[var(--muted)]"}`}>
-                  {slotTaken}/{supplements.length}
+                  {slotTaken}/{dueInSlot.length} due
                 </span>
               </div>
               <div className="space-y-1">
                 {supplements.map((s) => {
                   const taken = takenSet.has(s.id);
+                  const due = dueIds.has(s.id);
                   return (
                     <button
                       key={s.id}
-                      onClick={() => toggle(s.id, taken)}
+                      onClick={() => due && toggle(s.id, taken)}
+                      disabled={!due}
                       className={`flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors ${
-                        taken
+                        !due
+                          ? "border-[var(--card-border)]/50 bg-[var(--background)]/50 opacity-50 cursor-default"
+                          : taken
                           ? "border-[var(--accent)]/30 bg-[var(--accent)]/5"
                           : "border-[var(--card-border)] bg-[var(--background)] hover:border-[var(--muted)]"
                       }`}
                     >
                       {taken
                         ? <CheckCircle2 size={20} className="text-[var(--accent)] shrink-0" />
-                        : <Circle size={20} className="text-[var(--muted)] shrink-0" />}
+                        : <Circle size={20} className={`shrink-0 ${due ? "text-[var(--muted)]" : "text-[var(--card-border)]"}`} />}
                       <div className="min-w-0 flex-1">
                         <p className={`text-sm font-medium ${taken ? "line-through opacity-70" : ""}`}>
                           {s.name}
                           {s.dose && <span className="ml-1.5 text-xs font-normal text-[var(--muted)]">{s.dose}</span>}
+                          {!due && s.frequency === "every_2_days" && (
+                            <span className="ml-1.5 text-xs font-normal text-amber-400">Skip today (every 2 days)</span>
+                          )}
                         </p>
                         <p className="text-xs text-[var(--muted)]">
                           {s.brand && `${s.brand} · `}{s.timing}

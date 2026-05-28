@@ -8,7 +8,7 @@ import {
 
 export async function GET(req: NextRequest) {
   const activeOnly = req.nextUrl.searchParams.get("active") === "1";
-  return NextResponse.json(getSupplements(activeOnly));
+  return NextResponse.json(await getSupplements(activeOnly));
 }
 
 export async function POST(req: NextRequest) {
@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest) {
   const body = await req.json();
   const { id, ...data } = body;
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
-  const updated = updateSupplement(id, data);
+  const updated = await updateSupplement(id, data);
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json(updated);
 }
@@ -28,6 +28,6 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
-  deleteSupplement(id);
+  await deleteSupplement(id);
   return NextResponse.json({ ok: true });
 }

@@ -7,6 +7,7 @@ import {
   Dumbbell, Droplets, Flame, Scale, User, Zap, Coffee, TrendingDown,
 } from "lucide-react";
 import type { Supplement, SupplementCategory, UserProfile } from "@/lib/types";
+import { getImageUrl } from "@/lib/storage";
 import type { BodyMetric } from "@/lib/types";
 import { Card, Button, Input, Select, Textarea } from "@/components/ui";
 import { SupplementDailyTracker } from "@/components/SupplementDailyTracker";
@@ -158,11 +159,12 @@ export default function ProfilePage() {
             <div className="relative shrink-0">
               {profile?.avatar_filename ? (
                 <Image
-                  src={`/uploads/${profile.avatar_filename}`}
+                  src={getImageUrl(profile.avatar_filename)}
                   alt="Profile"
                   width={100}
                   height={100}
                   className="h-24 w-24 rounded-2xl object-cover ring-2 ring-[var(--accent)]/40"
+                  unoptimized
                 />
               ) : (
                 <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-[var(--card-border)]">
@@ -298,7 +300,7 @@ export default function ProfilePage() {
               items: [
                 { name: "Vitamin D3", dose: "5,000 IU", note: "take with fattest meal — fat-soluble" },
                 { name: "Vitamin K2", dose: "100 mcg", note: "always paired with D3" },
-                { name: "Zinc", dose: "50 mg", note: "with food — prevents nausea" },
+                { name: "Zinc", dose: "50 mg", note: "every 2 days with breakfast — not daily" },
                 { name: "Omega-3 Fish Oil", dose: "1,000 mg", note: "with your fattiest meal" },
                 { name: "Magnesium + B6", dose: "Per label", note: "or move to evening if you prefer" },
               ],

@@ -85,13 +85,13 @@ function seedSupplements(db: Database.Database) {
   if (count.c > 0) return;
   const now = new Date().toISOString();
   const insert = db.prepare(
-    `INSERT INTO supplements (id, name, brand, dose, category, timing, notes, active, created_at)
-     VALUES (@id, @name, @brand, @dose, @category, @timing, @notes, @active, @created_at)`
+    `INSERT INTO supplements (id, name, brand, dose, category, timing, frequency, notes, active, created_at)
+     VALUES (@id, @name, @brand, @dose, @category, @timing, @frequency, @notes, @active, @created_at)`
   );
   for (const s of [
     { name: "Vitamin D3", brand: "Viva Naturals", dose: "5,000 IU", category: "vitamin", timing: "Morning with breakfast + fat", notes: "Liquid in coconut oil — bone & immune" },
     { name: "Vitamin K2", brand: "Spring Valley", dose: "100 mcg", category: "vitamin", timing: "Morning with D3", notes: "60 softgels — bone support, pairs with D3" },
-    { name: "Zinc", brand: "Nature's Bounty", dose: "50 mg", category: "mineral", timing: "Morning with food", notes: "Immune health — take with food to avoid nausea" },
+    { name: "Zinc", brand: "Nature's Bounty", dose: "50 mg", category: "mineral", frequency: "every_2_days", timing: "Every 2 days with breakfast", notes: "Immune health — take with food. Every 2 days only (not daily)." },
     { name: "Omega-3 Fish Oil", brand: "Spring Valley", dose: "1,000 mg", category: "omega", timing: "Morning with meal", notes: "Heart & inflammation — take with fattest meal" },
     { name: "Magnesium + Vitamin B6", brand: "PONutrí", dose: "Per label", category: "mineral", timing: "Evening or pre-bed", notes: "Nerve & muscle support + B6 absorption boost" },
     { name: "L-Citrulline", brand: "Bulk Supplements", dose: "3,000 mg", category: "amino_acid", timing: "30–45 min pre-workout", notes: "Pump & endurance — 240 caps / 30 servings" },
@@ -99,7 +99,7 @@ function seedSupplements(db: Database.Database) {
     { name: "Gold Standard 100% Whey", brand: "Optimum Nutrition", dose: "1–2 scoops (~24–48g protein)", category: "protein", timing: "Post-workout or as needed to hit 200g protein", notes: "Vanilla Ice Cream — 5.5g BCAAs per scoop" },
     { name: "Quest Protein Bars", brand: "Quest", dose: "1 bar (~20g protein)", category: "protein", timing: "Snack — mid-morning or afternoon", notes: "Variety pack — good for hitting protein on the go" },
     { name: "Magnesium Glycinate", brand: "Nature's Bounty", dose: "240 mg", category: "mineral", timing: "30–60 min before bed", notes: "High absorption — sleep, muscle recovery, nervous system" },
-  ]) { insert.run({ id: uuidv4(), ...s, active: 1, created_at: now }); }
+  ]) { insert.run({ id: uuidv4(), ...s, frequency: (s as { frequency?: string }).frequency ?? "daily", active: 1, created_at: now }); }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

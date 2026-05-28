@@ -6,25 +6,29 @@ import {
   markAllSupplementsForDate,
   toggleSupplementIntake,
 } from "@/lib/db";
+import { filterDueSupplements } from "@/lib/supplement-utils";
 
 export async function GET(req: NextRequest) {
   const date = req.nextUrl.searchParams.get("date");
   const days = req.nextUrl.searchParams.get("days");
 
   if (days) {
-    return NextResponse.json(getSupplementIntakeHistory(parseInt(days)));
+    return NextResponse.json(await getSupplementIntakeHistory(parseInt(days)));
   }
 
   if (date) {
-    const intakes = getSupplementIntakesForDate(date);
-    const supplements = getSupplements(true);
+    const intakes = await getSupplementIntakesForDate(date);
+    const allActive = await getSupplements(true);
+    const dueToday = filterDueSupplements(allActive, date);
     const takenIds = new Set(intakes.filter((i) => i.taken).map((i) => i.supplement_id));
+    const dueTaken = dueToday.filter((s) => takenIds.has(s.id)).length;
     return NextResponse.json({
       date,
-      supplements,
+      supplements: allActive,
+      due_supplements: dueToday,
       taken_ids: [...takenIds],
-      taken: takenIds.size,
-      total: supplements.length,
+      taken: dueTaken,
+      total: dueToday.length,
     });
   }
 
@@ -36,13 +40,13 @@ export async function POST(req: NextRequest) {
 
   if (body.action === "toggle") {
     const { date, supplement_id, taken } = body;
-    const result = toggleSupplementIntake(date, supplement_id, taken);
+    const result = await toggleSupplementIntake(date, supplement_id, taken);
     return NextResponse.json(result);
   }
 
   if (body.action === "mark_all") {
     const { date, supplement_ids } = body;
-    markAllSupplementsForDate(date, supplement_ids);
+    await markAllSupplementsForDate(date, supplement_ids);
     return NextResponse.json({ ok: true });
   }
 

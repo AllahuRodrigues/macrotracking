@@ -1,4 +1,4 @@
-import type { Supplement } from "./types";
+import type { Supplement, SupplementFrequency } from "./types";
 
 export function getTimingSlot(timing?: string): string {
   const t = (timing ?? "").toLowerCase();
@@ -30,6 +30,27 @@ export const TIMING_ICONS: Record<string, string> = {
   "Before Bed": "🌙",
   Daily: "💊",
 };
+
+export function isSupplementDueToday(
+  frequency: SupplementFrequency | string | undefined,
+  date: string,
+  startDate = "2026-05-28"
+): boolean {
+  if (!frequency || frequency === "daily") return true;
+  const d1 = new Date(date + "T12:00:00").getTime();
+  const d0 = new Date(startDate + "T12:00:00").getTime();
+  const days = Math.floor((d1 - d0) / 86400000);
+  if (frequency === "every_2_days") return days % 2 === 0;
+  if (frequency === "weekly") return days % 7 === 0;
+  return true;
+}
+
+export function filterDueSupplements<T extends { frequency?: string }>(
+  supplements: T[],
+  date: string
+): T[] {
+  return supplements.filter((s) => isSupplementDueToday(s.frequency, date));
+}
 
 export function groupSupplementsByTiming(supplements: Supplement[]) {
   const groups: Record<string, Supplement[]> = {};

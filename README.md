@@ -34,6 +34,16 @@ Your breakfast is already logged for **2026-05-28**:
 | Oikos Triple Zero | 95 | 15g | 0g | 5g |
 | **Total** | **499** | **44g** | **30.5g** | **8g** |
 
+## Deploying to Vercel
+
+**Local dev** uses SQLite in `data/` (auto-created). **Vercel/production** requires Supabase — see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+Quick setup:
+1. Create free [Supabase](https://supabase.com) project
+2. Run `supabase/schema.sql` in SQL Editor
+3. Add `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` to Vercel env vars
+4. Redeploy
+
 ## Tech Stack
 
 - Next.js 16 · React 19 · TypeScript

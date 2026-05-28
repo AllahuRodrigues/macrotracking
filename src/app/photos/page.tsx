@@ -26,7 +26,7 @@ export default function PhotosPage() {
         </p>
       </div>
 
-      <PhotoUpload onUploaded={load} />
+      <PhotoUpload onUploaded={load} defaultCategory="body" />
 
       <Card
         title="Gallery"

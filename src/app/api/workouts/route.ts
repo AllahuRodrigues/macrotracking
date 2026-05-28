@@ -9,13 +9,13 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(req.nextUrl.searchParams.get("limit") ?? "30");
 
   if (date) {
-    const session = getSessionForDate(date);
+    const session = await getSessionForDate(date);
     if (!session) return NextResponse.json(null);
-    const exercises = getSessionExercises(session.id);
+    const exercises = await getSessionExercises(session.id);
     return NextResponse.json({ session, exercises });
   }
 
-  const sessions = getWorkoutSessions(limit);
+  const sessions = await getWorkoutSessions(limit);
   return NextResponse.json(sessions);
 }
 
@@ -23,12 +23,12 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
 
   if (body.type === "session") {
-    const session = createWorkoutSession(body.data);
+    const session = await createWorkoutSession(body.data);
     return NextResponse.json(session, { status: 201 });
   }
 
   if (body.type === "exercise") {
-    const ex = upsertSessionExercise(body.data);
+    const ex = await upsertSessionExercise(body.data);
     return NextResponse.json(ex, { status: 201 });
   }
 
