@@ -3,7 +3,7 @@ import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import type {
-  BodyMetric, FoodEntry, PhotoEntry, Supplement, UserProfile,
+  BodyMetric, FoodEntry, PhotoEntry, Supplement, SupplementIntake, UserProfile,
   WorkoutTemplate, TemplateExercise, WorkoutSession, SessionExercise, WaterLog,
 } from "./types";
 import { seedDatabase } from "./seed";
@@ -78,6 +78,15 @@ export function getDb(): Database.Database {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS supplement_intakes (
+      id TEXT PRIMARY KEY,
+      date TEXT NOT NULL,
+      supplement_id TEXT NOT NULL,
+      taken INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      UNIQUE(date, supplement_id)
+    );
+
     CREATE TABLE IF NOT EXISTS user_profile (
       id TEXT NOT NULL DEFAULT 'me' PRIMARY KEY,
       name TEXT,
@@ -91,6 +100,58 @@ export function getDb(): Database.Database {
       target_carbs INTEGER,
       notes TEXT,
       updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS workout_templates (
+      id TEXT PRIMARY KEY,
+      week_day INTEGER NOT NULL,
+      day_name TEXT NOT NULL,
+      label TEXT NOT NULL,
+      muscle_groups TEXT NOT NULL DEFAULT '',
+      goal TEXT NOT NULL DEFAULT '',
+      cardio TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS template_exercises (
+      id TEXT PRIMARY KEY,
+      template_id TEXT NOT NULL REFERENCES workout_templates(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      sets_prescribed TEXT NOT NULL DEFAULT '3',
+      reps_prescribed TEXT NOT NULL DEFAULT '8-12',
+      order_idx INTEGER NOT NULL DEFAULT 0,
+      notes TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS workout_sessions (
+      id TEXT PRIMARY KEY,
+      date TEXT NOT NULL,
+      template_id TEXT REFERENCES workout_templates(id),
+      name TEXT NOT NULL,
+      duration_min INTEGER,
+      cardio_done INTEGER NOT NULL DEFAULT 0,
+      cardio_min INTEGER,
+      notes TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS session_exercises (
+      id TEXT PRIMARY KEY,
+      session_id TEXT NOT NULL REFERENCES workout_sessions(id) ON DELETE CASCADE,
+      template_exercise_id TEXT,
+      name TEXT NOT NULL,
+      sets_prescribed TEXT NOT NULL DEFAULT '3',
+      reps_prescribed TEXT NOT NULL DEFAULT '8-12',
+      sets_data TEXT NOT NULL DEFAULT '[]',
+      order_idx INTEGER NOT NULL DEFAULT 0,
+      notes TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS water_logs (
+      id TEXT PRIMARY KEY,
+      date TEXT NOT NULL,
+      amount_ml INTEGER NOT NULL,
+      created_at TEXT NOT NULL
     );
 
     CREATE INDEX IF NOT EXISTS idx_food_date ON food_entries(date);
@@ -347,6 +408,139 @@ export function getMacroSummaryForDate(date: string) {
     .get(date);
 }
 
+// ── Workout Templates ──
+
+export function getWorkoutTemplates(): WorkoutTemplate[] {
+  return getDb().prepare("SELECT * FROM workout_templates ORDER BY week_day").all() as WorkoutTemplate[];
+}
+
+export function getTemplateForDay(weekDay: number): WorkoutTemplate | null {
+  return (getDb().prepare("SELECT * FROM workout_templates WHERE week_day = ?").get(weekDay) as WorkoutTemplate | undefined) ?? null;
+}
+
+export function getTemplateExercises(templateId: string): TemplateExercise[] {
+  return getDb()
+    .prepare("SELECT * FROM template_exercises WHERE template_id = ? ORDER BY order_idx")
+    .all(templateId) as TemplateExercise[];
+}
+
+// ── Workout Sessions ──
+
+export function getWorkoutSessions(limit = 30): WorkoutSession[] {
+  return getDb()
+    .prepare("SELECT * FROM workout_sessions ORDER BY date DESC, created_at DESC LIMIT ?")
+    .all(limit) as WorkoutSession[];
+}
+
+export function getSessionForDate(date: string): WorkoutSession | null {
+  return (getDb()
+    .prepare("SELECT * FROM workout_sessions WHERE date = ? ORDER BY created_at DESC LIMIT 1")
+    .get(date) as WorkoutSession | undefined) ?? null;
+}
+
+export function createWorkoutSession(data: Omit<WorkoutSession, "id" | "created_at">): WorkoutSession {
+  const db = getDb();
+  const session: WorkoutSession = { id: uuidv4(), ...data, created_at: new Date().toISOString() };
+  db.prepare(
+    `INSERT INTO workout_sessions (id, date, template_id, name, duration_min, cardio_done, cardio_min, notes, created_at)
+     VALUES (@id, @date, @template_id, @name, @duration_min, @cardio_done, @cardio_min, @notes, @created_at)`
+  ).run({
+    ...session,
+    template_id: session.template_id ?? null,
+    duration_min: session.duration_min ?? null,
+    cardio_min: session.cardio_min ?? null,
+    notes: session.notes ?? null,
+  });
+  return session;
+}
+
+export function updateWorkoutSession(id: string, data: Partial<Omit<WorkoutSession, "id" | "created_at">>): WorkoutSession | null {
+  const db = getDb();
+  const existing = db.prepare("SELECT * FROM workout_sessions WHERE id = ?").get(id) as WorkoutSession | undefined;
+  if (!existing) return null;
+  const merged = { ...existing, ...data };
+  db.prepare(
+    `UPDATE workout_sessions SET date=@date, template_id=@template_id, name=@name,
+     duration_min=@duration_min, cardio_done=@cardio_done, cardio_min=@cardio_min, notes=@notes
+     WHERE id=@id`
+  ).run({
+    ...merged,
+    template_id: merged.template_id ?? null,
+    duration_min: merged.duration_min ?? null,
+    cardio_min: merged.cardio_min ?? null,
+    notes: merged.notes ?? null,
+  });
+  return merged;
+}
+
+export function deleteWorkoutSession(id: string): boolean {
+  return getDb().prepare("DELETE FROM workout_sessions WHERE id = ?").run(id).changes > 0;
+}
+
+// ── Session Exercises ──
+
+export function getSessionExercises(sessionId: string): SessionExercise[] {
+  return getDb()
+    .prepare("SELECT * FROM session_exercises WHERE session_id = ? ORDER BY order_idx")
+    .all(sessionId) as SessionExercise[];
+}
+
+export function upsertSessionExercise(data: Omit<SessionExercise, "id"> & { id?: string }): SessionExercise {
+  const db = getDb();
+  const id = data.id ?? uuidv4();
+  const existing = data.id ? db.prepare("SELECT id FROM session_exercises WHERE id = ?").get(data.id) : null;
+  const row = {
+    id,
+    session_id: data.session_id,
+    template_exercise_id: data.template_exercise_id ?? null,
+    name: data.name,
+    sets_prescribed: data.sets_prescribed,
+    reps_prescribed: data.reps_prescribed,
+    sets_data: data.sets_data,
+    order_idx: data.order_idx,
+    notes: data.notes ?? null,
+  };
+  if (existing) {
+    db.prepare(
+      `UPDATE session_exercises SET sets_data=@sets_data, notes=@notes WHERE id=@id`
+    ).run(row);
+  } else {
+    db.prepare(
+      `INSERT INTO session_exercises (id, session_id, template_exercise_id, name, sets_prescribed, reps_prescribed, sets_data, order_idx, notes)
+       VALUES (@id, @session_id, @template_exercise_id, @name, @sets_prescribed, @reps_prescribed, @sets_data, @order_idx, @notes)`
+    ).run(row);
+  }
+  return { ...data, id } as SessionExercise;
+}
+
+// ── Water Logs ──
+
+export function getWaterLogForDate(date: string): WaterLog[] {
+  return getDb().prepare("SELECT * FROM water_logs WHERE date = ? ORDER BY created_at").all(date) as WaterLog[];
+}
+
+export function getTotalWaterForDate(date: string): number {
+  const result = getDb()
+    .prepare("SELECT COALESCE(SUM(amount_ml), 0) as total FROM water_logs WHERE date = ?")
+    .get(date) as { total: number };
+  return result.total;
+}
+
+export function addWaterLog(date: string, amount_ml: number): WaterLog {
+  const db = getDb();
+  const entry: WaterLog = { id: uuidv4(), date, amount_ml, created_at: new Date().toISOString() };
+  db.prepare("INSERT INTO water_logs (id, date, amount_ml, created_at) VALUES (@id, @date, @amount_ml, @created_at)").run(entry);
+  return entry;
+}
+
+export function deleteWaterLog(id: string): boolean {
+  return getDb().prepare("DELETE FROM water_logs WHERE id = ?").run(id).changes > 0;
+}
+
+export function resetWaterForDate(date: string): void {
+  getDb().prepare("DELETE FROM water_logs WHERE date = ?").run(date);
+}
+
 // ── Supplements ──
 
 export function getSupplements(activeOnly = false): Supplement[] {
@@ -391,6 +585,84 @@ export function deleteSupplement(id: string): boolean {
   const database = getDb();
   const result = database.prepare("DELETE FROM supplements WHERE id = ?").run(id);
   return result.changes > 0;
+}
+
+// ── Supplement Intakes ──
+
+export function getSupplementIntakesForDate(date: string): SupplementIntake[] {
+  return getDb()
+    .prepare("SELECT * FROM supplement_intakes WHERE date = ?")
+    .all(date) as SupplementIntake[];
+}
+
+export function toggleSupplementIntake(
+  date: string,
+  supplementId: string,
+  taken: boolean
+): SupplementIntake | null {
+  const db = getDb();
+  const existing = db
+    .prepare("SELECT * FROM supplement_intakes WHERE date = ? AND supplement_id = ?")
+    .get(date, supplementId) as SupplementIntake | undefined;
+
+  if (taken) {
+    if (existing) {
+      db.prepare("UPDATE supplement_intakes SET taken = 1 WHERE id = ?").run(existing.id);
+      return { ...existing, taken: 1 };
+    }
+    const entry: SupplementIntake = {
+      id: uuidv4(),
+      date,
+      supplement_id: supplementId,
+      taken: 1,
+      created_at: new Date().toISOString(),
+    };
+    db.prepare(
+      `INSERT INTO supplement_intakes (id, date, supplement_id, taken, created_at)
+       VALUES (@id, @date, @supplement_id, @taken, @created_at)`
+    ).run(entry);
+    return entry;
+  }
+
+  if (existing) {
+    db.prepare("DELETE FROM supplement_intakes WHERE id = ?").run(existing.id);
+  }
+  return null;
+}
+
+export function markAllSupplementsForDate(date: string, supplementIds: string[]): void {
+  const db = getDb();
+  const insert = db.prepare(
+    `INSERT OR IGNORE INTO supplement_intakes (id, date, supplement_id, taken, created_at)
+     VALUES (@id, @date, @supplement_id, 1, @created_at)`
+  );
+  const now = new Date().toISOString();
+  for (const supplementId of supplementIds) {
+    insert.run({ id: uuidv4(), date, supplement_id: supplementId, created_at: now });
+  }
+}
+
+export function getSupplementIntakeHistory(days = 14) {
+  const db = getDb();
+  const activeCount = (db.prepare("SELECT COUNT(*) as c FROM supplements WHERE active = 1").get() as { c: number }).c;
+
+  const rows = db
+    .prepare(
+      `SELECT date, COUNT(*) as taken
+       FROM supplement_intakes
+       WHERE taken = 1
+       GROUP BY date
+       ORDER BY date DESC
+       LIMIT ?`
+    )
+    .all(days) as { date: string; taken: number }[];
+
+  return rows.map((r) => ({
+    date: r.date,
+    taken: r.taken,
+    total: activeCount,
+    pct: activeCount > 0 ? Math.round((r.taken / activeCount) * 100) : 0,
+  }));
 }
 
 // ── User Profile ──

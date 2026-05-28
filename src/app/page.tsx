@@ -10,6 +10,7 @@ import { MacroRing, MacroBar } from "@/components/MacroRing";
 import { Card, Button } from "@/components/ui";
 import { FoodEntryList } from "@/components/FoodEntryForm";
 import { DayTypeToggle } from "@/components/DayTypeToggle";
+import { SupplementDailyTracker } from "@/components/SupplementDailyTracker";
 import { useDayType } from "@/lib/useDayType";
 
 export default function DashboardPage() {
@@ -126,6 +127,8 @@ export default function DashboardPage() {
           </Link>
         </Card>
       </div>
+
+      <SupplementDailyTracker compact initialDate={date} />
 
       <Card
         title="Today's Meals"

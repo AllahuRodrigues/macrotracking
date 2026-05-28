@@ -101,6 +101,21 @@ export interface Supplement {
   created_at: string;
 }
 
+export interface SupplementIntake {
+  id: string;
+  date: string;
+  supplement_id: string;
+  taken: number; // 0 | 1
+  created_at: string;
+}
+
+export interface SupplementDaySummary {
+  date: string;
+  taken: number;
+  total: number;
+  pct: number;
+}
+
 export interface UserProfile {
   id: string;
   name?: string;

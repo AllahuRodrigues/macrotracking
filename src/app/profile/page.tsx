@@ -9,6 +9,7 @@ import {
 import type { Supplement, SupplementCategory, UserProfile } from "@/lib/types";
 import type { BodyMetric } from "@/lib/types";
 import { Card, Button, Input, Select, Textarea } from "@/components/ui";
+import { SupplementDailyTracker } from "@/components/SupplementDailyTracker";
 
 const SUPP_CATEGORIES: { value: SupplementCategory; label: string }[] = [
   { value: "vitamin", label: "Vitamin" },
@@ -282,6 +283,67 @@ export default function ProfilePage() {
           </div>
         </Card>
       )}
+
+      {/* ── Daily Intake Tracker ── */}
+      <SupplementDailyTracker compact />
+
+      {/* ── Supplement Timing Schedule ── */}
+      <Card title="Daily Supplement Schedule">
+        <div className="space-y-3">
+          {[
+            {
+              time: "🌅 Morning (7–9 AM)",
+              label: "With breakfast",
+              color: "border-amber-400/30 bg-amber-400/5",
+              items: [
+                { name: "Vitamin D3", dose: "5,000 IU", note: "take with fattest meal — fat-soluble" },
+                { name: "Vitamin K2", dose: "100 mcg", note: "always paired with D3" },
+                { name: "Zinc", dose: "50 mg", note: "with food — prevents nausea" },
+                { name: "Omega-3 Fish Oil", dose: "1,000 mg", note: "with your fattiest meal" },
+                { name: "Magnesium + B6", dose: "Per label", note: "or move to evening if you prefer" },
+              ],
+            },
+            {
+              time: "💪 Pre-Workout (30–45 min before)",
+              label: "Before training",
+              color: "border-[var(--accent)]/30 bg-[var(--accent)]/5",
+              items: [
+                { name: "L-Citrulline", dose: "3,000 mg", note: "pump, blood flow, endurance — take on empty-ish stomach" },
+              ],
+            },
+            {
+              time: "🥤 Post-Workout (within 1–2 hrs)",
+              label: "After training",
+              color: "border-blue-400/30 bg-blue-400/5",
+              items: [
+                { name: "Creatine Monohydrate", dose: "5 g", note: "timing doesn't matter much — just be consistent daily" },
+                { name: "Gold Standard Whey", dose: "1–2 scoops", note: "hit your 200g protein target — mix in water or milk" },
+              ],
+            },
+            {
+              time: "🌙 Before Bed (30–60 min before sleep)",
+              label: "Night recovery",
+              color: "border-purple-400/30 bg-purple-400/5",
+              items: [
+                { name: "Magnesium Glycinate", dose: "240 mg", note: "best form for sleep & muscle recovery — take alone" },
+              ],
+            },
+          ].map((block) => (
+            <div key={block.time} className={`rounded-xl border p-3 ${block.color}`}>
+              <p className="text-sm font-semibold mb-2">{block.time}</p>
+              <div className="space-y-1.5">
+                {block.items.map((item) => (
+                  <div key={item.name} className="flex items-start justify-between gap-2 text-xs">
+                    <span className="font-medium">{item.name} <span className="text-[var(--muted)] font-normal">— {item.dose}</span></span>
+                    <span className="text-[var(--muted)] text-right shrink-0 max-w-[40%]">{item.note}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          <p className="text-xs text-[var(--muted)] pt-1">Quest bar anytime as a snack to hit protein. Water goal: 4L / day.</p>
+        </div>
+      </Card>
 
       {/* ── Cut Plan ── */}
       <Card title="Cut Plan — 8–10 Weeks">

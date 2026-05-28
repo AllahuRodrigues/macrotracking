@@ -10,11 +10,14 @@ import {
   BarChart3,
   Dumbbell,
   UserCircle,
+  Pill,
 } from "lucide-react";
 
 const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/meals", label: "Meals", icon: UtensilsCrossed },
+  { href: "/workout", label: "Workout", icon: Dumbbell },
+  { href: "/supplements", label: "Supps", icon: Pill },
   { href: "/body", label: "Body", icon: Scale },
   { href: "/photos", label: "Photos", icon: Camera },
   { href: "/stats", label: "Stats", icon: BarChart3 },
