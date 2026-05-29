@@ -6,6 +6,7 @@ import type { FoodEntry, MealType } from "@/lib/types";
 import { MEAL_TYPES } from "@/lib/utils";
 import { isSupplementMacroEntry } from "@/lib/supplement-macros-config";
 import { Button, Input, Select, Textarea, Card } from "./ui";
+import { DatePickerField } from "./DatePicker";
 
 interface FoodEntryFormProps {
   date: string;
@@ -113,12 +114,7 @@ export function FoodEntryForm({ date, onSaved, editEntry, onCancelEdit }: FoodEn
               </option>
             ))}
           </Select>
-          <Input
-            label="Date"
-            type="date"
-            value={date}
-            disabled
-          />
+          <DatePickerField label="Date" value={date} onChange={() => {}} disabled />
         </div>
 
         <Input

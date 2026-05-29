@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPhoto, deletePhoto, getPhotos } from "@/lib/db";
 import { saveUploadedFile } from "@/lib/upload";
+import { todayISO } from "@/lib/timezone";
 import type { PhotoCategory } from "@/lib/types";
 
 export async function GET(req: NextRequest) {
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
-  const date = (formData.get("date") as string) || new Date().toISOString().split("T")[0];
+  const date = (formData.get("date") as string) || todayISO();
   const category = ((formData.get("category") as string) || "meal") as PhotoCategory;
   const caption = (formData.get("caption") as string) || undefined;
 

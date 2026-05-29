@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { format, parseISO } from "date-fns";
 import {
   Dumbbell, Droplets, CheckCircle2, Circle, ChevronDown, ChevronUp,
   Play, History, LayoutList, Plus, Minus, RotateCcw,
@@ -11,7 +10,7 @@ import type {
   WorkoutTemplate, TemplateExercise, WorkoutSession, SessionExercise, SessionSet,
 } from "@/lib/types";
 import { WATER_GOAL_ML } from "@/lib/types";
-import { todayISO } from "@/lib/utils";
+import { formatDateMedium, todayISO, weekdayIndexISO } from "@/lib/utils";
 import { Card, Button } from "@/components/ui";
 
 type Tab = "today" | "history" | "program";
@@ -22,7 +21,7 @@ const WATER_STEPS = [250, 500, 750, 1000];
 export default function WorkoutPage() {
   const [tab, setTab] = useState<Tab>("today");
   const [date] = useState(todayISO());
-  const today = new Date(date + "T12:00:00").getDay();
+  const today = weekdayIndexISO(date);
 
   const [template, setTemplate] = useState<WorkoutTemplate | null>(null);
   const [templateExercises, setTemplateExercises] = useState<TemplateExercise[]>([]);
@@ -152,7 +151,7 @@ export default function WorkoutPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Workout</h1>
-          <p className="text-sm text-[var(--muted)]">{DAY_NAMES[today]} · {format(parseISO(date), "MMM d, yyyy")} · Fitness SF</p>
+          <p className="text-sm text-[var(--muted)]">{DAY_NAMES[today]} · {formatDateMedium(date)} · Fitness SF</p>
         </div>
         {session && startTime && (
           <div className="flex items-center gap-1.5 rounded-lg bg-[var(--accent)]/10 px-3 py-1.5">

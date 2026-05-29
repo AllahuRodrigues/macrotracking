@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addWaterLog, getTotalWaterForDate, resetWaterForDate } from "@/lib/db";
+import { todayISO } from "@/lib/timezone";
 
 export async function GET(req: NextRequest) {
-  const date = req.nextUrl.searchParams.get("date") ?? new Date().toISOString().split("T")[0];
+  const date = req.nextUrl.searchParams.get("date") ?? todayISO();
   const total = await getTotalWaterForDate(date);
   return NextResponse.json({ date, total_ml: total });
 }

@@ -5,8 +5,9 @@ import Image from "next/image";
 import { getImageUrl } from "@/lib/storage";
 import { Plus, Trash2, Upload, AlertCircle } from "lucide-react";
 import type { PhotoEntry } from "@/lib/types";
-import { PHOTO_CATEGORIES } from "@/lib/utils";
+import { PHOTO_CATEGORIES, todayISO } from "@/lib/utils";
 import { Button, Input, Select, Card } from "./ui";
+import { DatePickerField } from "./DatePicker";
 
 interface PhotoUploadProps {
   onUploaded: () => void;
@@ -15,7 +16,7 @@ interface PhotoUploadProps {
 
 export function PhotoUpload({ onUploaded, defaultCategory = "body" }: PhotoUploadProps) {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(todayISO());
   const [category, setCategory] = useState(defaultCategory);
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
@@ -73,7 +74,7 @@ export function PhotoUpload({ onUploaded, defaultCategory = "body" }: PhotoUploa
     <Card title="Upload Photo">
       <form onSubmit={handleSubmit} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <DatePickerField label="Date" value={date} onChange={setDate} />
           <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value)}>
             {PHOTO_CATEGORIES.map((c) => (
               <option key={c} value={c}>

@@ -1,4 +1,6 @@
+import { differenceInCalendarDays } from "date-fns";
 import type { Supplement, SupplementFrequency } from "./types";
+import { parseDateISO } from "./timezone";
 
 export function getTimingSlot(timing?: string): string {
   const t = (timing ?? "").toLowerCase();
@@ -37,9 +39,7 @@ export function isSupplementDueToday(
   startDate = "2026-05-28"
 ): boolean {
   if (!frequency || frequency === "daily") return true;
-  const d1 = new Date(date + "T12:00:00").getTime();
-  const d0 = new Date(startDate + "T12:00:00").getTime();
-  const days = Math.floor((d1 - d0) / 86400000);
+  const days = differenceInCalendarDays(parseDateISO(date), parseDateISO(startDate));
   if (frequency === "every_2_days") return days % 2 === 0;
   if (frequency === "weekly") return days % 7 === 0;
   return true;

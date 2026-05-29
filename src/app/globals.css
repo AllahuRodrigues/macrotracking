@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "react-day-picker/style.css";
 
 :root {
   --background: #F8F8F8;
@@ -51,4 +52,58 @@ input, select, textarea {
 ::-webkit-scrollbar-thumb {
   background: var(--card-border);
   border-radius: 3px;
+}
+
+/* react-day-picker — app theme */
+.rdp-root {
+  --rdp-accent-color: var(--accent);
+  --rdp-accent-background-color: color-mix(in srgb, var(--accent) 15%, transparent);
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  --rdp-day_button-border-radius: 8px;
+  --rdp-selected-border: none;
+  --rdp-today-color: var(--accent-warm);
+  font-size: 0.875rem;
+}
+
+.rdp-month_caption {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.rdp-weekday {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.rdp-day_button:hover:not([disabled]) {
+  background: var(--surface);
+}
+
+.rdp-selected .rdp-day_button {
+  background: var(--accent) !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+.rdp-today:not(.rdp-selected) .rdp-day_button {
+  border: 1px solid var(--accent-warm);
+  color: var(--accent-warm);
+  font-weight: 600;
+}
+
+.rdp-button_previous,
+.rdp-button_next {
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.rdp-button_previous:hover,
+.rdp-button_next:hover {
+  background: var(--surface);
+  color: var(--foreground);
 }

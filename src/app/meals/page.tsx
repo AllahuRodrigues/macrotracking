@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { format, parseISO } from "date-fns";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { FoodEntry } from "@/lib/types";
-import { MACRO_COLORS, todayISO } from "@/lib/utils";
+import { MACRO_COLORS, todayISO, formatDateLong } from "@/lib/utils";
 import { FoodEntryForm, FoodEntryList } from "@/components/FoodEntryForm";
 import { MacroBar } from "@/components/MacroRing";
-import { Card, Button } from "@/components/ui";
+import { Card } from "@/components/ui";
+import { DateNav } from "@/components/DatePicker";
 import { DayTypeToggle } from "@/components/DayTypeToggle";
 import { useDayType } from "@/lib/useDayType";
 import { GuestBanner } from "@/components/GuestBanner";
@@ -39,12 +38,6 @@ export default function MealsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  function shiftDate(days: number) {
-    const d = new Date(date + "T12:00:00");
-    d.setDate(d.getDate() + days);
-    setDate(d.toISOString().split("T")[0]);
-  }
-
   const totals = {
     calories: stats.calories ?? 0,
     protein: stats.protein ?? 0,
@@ -57,20 +50,9 @@ export default function MealsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Meals</h1>
-          <p className="text-sm text-[var(--muted)]">
-            {format(parseISO(date), "EEEE, MMMM d, yyyy")}
-          </p>
+          <p className="text-sm text-[var(--muted)]">{formatDateLong(date)}</p>
         </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" onClick={() => shiftDate(-1)}><ChevronLeft size={18} /></Button>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg border border-[var(--card-border)] bg-[var(--card)] px-2 py-1.5 text-sm"
-          />
-          <Button variant="ghost" onClick={() => shiftDate(1)}><ChevronRight size={18} /></Button>
-        </div>
+        <DateNav value={date} onChange={setDate} />
       </div>
 
       <DayTypeToggle dayType={dayType} setDayType={setDayType} />

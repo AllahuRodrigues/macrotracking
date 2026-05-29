@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, X, Check } from "lucide-react";
 import type { BodyMetric } from "@/lib/types";
+import { todayISO } from "@/lib/utils";
 import { Button, Input, Textarea, Card } from "./ui";
+import { DatePickerField } from "./DatePicker";
 
 interface BodyMetricFormProps {
   onSaved: () => void;
@@ -12,7 +14,7 @@ interface BodyMetricFormProps {
 }
 
 const emptyForm = {
-  date: new Date().toISOString().split("T")[0],
+  date: todayISO(),
   weight_lbs: "",
   body_fat_pct: "",
   muscle_mass_lbs: "",
@@ -108,12 +110,10 @@ export function BodyMetricForm({ onSaved, editMetric, onCancelEdit }: BodyMetric
   return (
     <Card title={isEditing ? "Edit Reading" : "New Body / InBody Reading"}>
       <form onSubmit={handleSubmit} className="space-y-3">
-        <Input
+        <DatePickerField
           label="Date"
-          type="date"
           value={form.date}
-          onChange={(e) => setForm({ ...form, date: e.target.value })}
-          required
+          onChange={(date) => setForm({ ...form, date })}
         />
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

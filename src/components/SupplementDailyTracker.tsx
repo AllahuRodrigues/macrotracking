@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { format, parseISO, subDays } from "date-fns";
-import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Pill, Minus, Plus } from "lucide-react";
+import { CheckCircle2, Circle, Pill, Minus, Plus } from "lucide-react";
 import type { Supplement, SupplementDaySummary } from "@/lib/types";
 import { groupSupplementsByTiming, isSupplementDueToday } from "@/lib/supplement-utils";
 import {
@@ -10,9 +9,16 @@ import {
   supplementAllowsQuantity,
   supplementTracksMacros,
 } from "@/lib/supplement-macros-config";
-import { todayISO } from "@/lib/utils";
+import {
+  todayISO,
+  formatDateLong,
+  formatWeekday,
+  formatDayNum,
+  subDaysISO,
+} from "@/lib/utils";
 import { useAccess } from "@/context/AccessProvider";
 import { Card, Button } from "./ui";
+import { DateNav } from "./DatePicker";
 
 interface IntakeData {
   date: string;
@@ -106,12 +112,6 @@ export function SupplementDailyTracker({ initialDate, compact, onChange }: Suppl
 
   useEffect(() => { load(); }, [load]);
 
-  function shiftDate(days: number) {
-    const d = new Date(date + "T12:00:00");
-    d.setDate(d.getDate() + days);
-    setDate(d.toISOString().split("T")[0]);
-  }
-
   async function toggle(supplementId: string, currentlyTaken: boolean) {
     if (!canWrite) return;
     const qty = data?.quantities?.[supplementId] ?? 1;
@@ -172,8 +172,7 @@ export function SupplementDailyTracker({ initialDate, compact, onChange }: Suppl
   const groups = data ? groupSupplementsByTiming(data.supplements) : [];
 
   const stripDays = Array.from({ length: 14 }, (_, i) => {
-    const d = subDays(new Date(date + "T12:00:00"), 13 - i);
-    const iso = d.toISOString().split("T")[0];
+    const iso = subDaysISO(date, 13 - i);
     const h = history.find((x) => x.date === iso);
     return { date: iso, pct: h?.pct ?? 0, taken: h?.taken ?? 0, total: h?.total ?? data?.total ?? 0 };
   });
@@ -285,20 +284,9 @@ export function SupplementDailyTracker({ initialDate, compact, onChange }: Suppl
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold">Daily Supplement Intake</h2>
-          <p className="text-sm text-[var(--muted)]">
-            {format(parseISO(date), "EEEE, MMMM d, yyyy")}
-          </p>
+          <p className="text-sm text-[var(--muted)]">{formatDateLong(date)}</p>
         </div>
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" onClick={() => shiftDate(-1)}><ChevronLeft size={18} /></Button>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="rounded-lg border border-[var(--card-border)] bg-[var(--card)] px-2 py-1.5 text-sm"
-          />
-          <Button variant="ghost" onClick={() => shiftDate(1)}><ChevronRight size={18} /></Button>
-        </div>
+        <DateNav value={date} onChange={setDate} compact />
       </div>
 
       {!canWrite && (
@@ -355,10 +343,10 @@ export function SupplementDailyTracker({ initialDate, compact, onChange }: Suppl
                 }`}
               >
                 <span className="text-[9px] text-[var(--muted)]">
-                  {format(parseISO(d.date), "EEE")}
+                  {formatWeekday(d.date)}
                 </span>
                 <span className="text-[10px] font-semibold">
-                  {format(parseISO(d.date), "d")}
+                  {formatDayNum(d.date)}
                 </span>
                 <div
                   className={`mt-1 h-1.5 w-full rounded-full ${
