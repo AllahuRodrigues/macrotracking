@@ -1,22 +1,33 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { DayType, MacroGoals } from "./types";
 import { WORKOUT_DAY_GOALS, REST_DAY_GOALS, DEFAULT_GOALS } from "./types";
 
+const STORAGE_KEY = "dayType";
+
 function readStorage(): DayType | null {
   if (typeof window === "undefined") return null;
-  return (localStorage.getItem("dayType") as DayType) ?? null;
+  const v = localStorage.getItem(STORAGE_KEY);
+  if (v === "workout" || v === "rest") return v;
+  return null;
 }
 
 export function useDayType() {
-  const [dayType, setDayTypeState] = useState<DayType | null>(() => readStorage());
+  // Always null on first render (server + client) to avoid hydration mismatch
+  const [dayType, setDayTypeState] = useState<DayType | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setDayTypeState(readStorage());
+    setReady(true);
+  }, []);
 
   const setDayType = useCallback((t: DayType | null) => {
     setDayTypeState(t);
     if (typeof window !== "undefined") {
-      if (t) localStorage.setItem("dayType", t);
-      else localStorage.removeItem("dayType");
+      if (t) localStorage.setItem(STORAGE_KEY, t);
+      else localStorage.removeItem(STORAGE_KEY);
     }
   }, []);
 
@@ -27,5 +38,5 @@ export function useDayType() {
       ? REST_DAY_GOALS
       : DEFAULT_GOALS;
 
-  return { dayType, setDayType, goals };
+  return { dayType, setDayType, goals, ready };
 }
