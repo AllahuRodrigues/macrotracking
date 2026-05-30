@@ -85,6 +85,24 @@ const MEALS = [
     carbs: 22,
     notes: "Whey: 360 cal / 72g P · Milk 500mL: ~260 cal / 27g P · Creatine 10g: 0 cal",
   },
+  {
+    meal_type: "dinner",
+    name: "Sushi — 1 small tuna nigiri + 8 small pieces",
+    calories: 405,
+    protein: 20,
+    fat: 7,
+    carbs: 61,
+    notes: "Est. ~45 kcal/piece avg (rice + fish); tuna piece ~4g P",
+  },
+  {
+    meal_type: "snack",
+    name: "Chocolate cookie (1 small)",
+    calories: 140,
+    protein: 2,
+    fat: 7,
+    carbs: 18,
+    notes: "Small bakery/chocolate chip cookie estimate",
+  },
 ];
 
 async function main() {
