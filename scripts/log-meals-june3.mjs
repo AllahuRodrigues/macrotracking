@@ -1,6 +1,6 @@
 /**
- * Log June 2, 2026 meals to Supabase
- * Run: node scripts/log-meals-june2.mjs
+ * Log June 3, 2026 meals to Supabase
+ * Run: node scripts/log-meals-june3.mjs
  */
 import fs from "fs";
 import path from "path";
@@ -10,7 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const DATE = "2026-06-02";
+const DATE = "2026-06-03";
 
 function loadEnv() {
   const envPath = path.join(root, ".env");
@@ -43,12 +43,12 @@ const supabase = createClient(url, key, {
 const MEALS = [
   {
     meal_type: "breakfast",
-    name: "Scrambled eggs — 3 whole + 3 whites, 1 tsp milk",
-    calories: 269,
-    protein: 31,
-    fat: 15,
+    name: "Scrambled eggs — 3 whole + 2 whites, 3 tsp milk",
+    calories: 259,
+    protein: 27,
+    fat: 16,
     carbs: 1,
-    notes: "3 eggs ~210/18P/15F · 3 whites ~51/12P · splash 1 tsp milk",
+    notes: "3 eggs ~210/18P/15F · 2 whites ~34/8P · 3 tsp milk mixed in",
   },
   {
     meal_type: "breakfast",
@@ -57,68 +57,16 @@ const MEALS = [
     protein: 0,
     fat: 9,
     carbs: 0,
-    notes: "2 tsp olive oil for scrambling",
-  },
-  {
-    meal_type: "breakfast",
-    name: "Oikos protein yogurt",
-    calories: 90,
-    protein: 15,
-    fat: 0,
-    carbs: 7,
+    notes: "Pan oil for scrambled eggs",
   },
   {
     meal_type: "lunch",
-    name: "Factor — Pesto Chicken & Quinoa (peppers, squash & carrots)",
-    calories: 590,
-    protein: 43,
-    fat: 25,
-    carbs: 42,
-    notes: "Full tray 14 oz / 397g — label: 590 kcal, 43g P, 42g C, 25g F",
-  },
-  {
-    meal_type: "lunch",
-    name: "Quest bar — Cookies & Cream",
-    calories: 190,
-    protein: 21,
-    fat: 8,
-    carbs: 4,
-    notes: "21g protein per bar",
-  },
-  {
-    meal_type: "lunch",
-    name: "Mediterranean sample — rice, hummus, small meat",
-    calories: 170,
-    protein: 9,
-    fat: 8,
-    carbs: 16,
-    notes: "Est. ~4 small spoons rice + bit hummus + 1 small spoon mystery meat",
-  },
-  {
-    meal_type: "dinner",
-    name: "Factor — Pepper Jack Guacamole Burger (smoky potatoes & peppers)",
-    calories: 650,
-    protein: 34,
-    fat: 39,
-    carbs: 37,
-    notes: "Full tray 12.9 oz / 366g — label: 650 kcal, 34g P, 37g C, 39g F",
-  },
-  {
-    meal_type: "dinner",
-    name: "Scrambled eggs — 2 whole + 3 egg whites",
-    calories: 191,
-    protein: 24,
-    fat: 10,
-    carbs: 0,
-    notes: "2 eggs ~140/12P/10F · 3 whites ~51/12P",
-  },
-  {
-    meal_type: "dinner",
-    name: "Oikos protein yogurt",
-    calories: 90,
-    protein: 15,
-    fat: 0,
-    carbs: 7,
+    name: "Factor — Smoky BBQ Chicken Breast (potato mash, creamed corn & peppers)",
+    calories: 680,
+    protein: 42,
+    fat: 33,
+    carbs: 52,
+    notes: "Full tray 15.1 oz / 428g — label: 680 kcal, 42g P, 52g C, 33g F",
   },
 ];
 
