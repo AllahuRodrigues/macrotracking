@@ -67,6 +67,33 @@ const MEALS = [
     fat: 0,
     carbs: 7,
   },
+  {
+    meal_type: "lunch",
+    name: "Factor — Pesto Chicken & Quinoa (peppers, squash & carrots)",
+    calories: 590,
+    protein: 43,
+    fat: 25,
+    carbs: 42,
+    notes: "Full tray 14 oz / 397g — label: 590 kcal, 43g P, 42g C, 25g F",
+  },
+  {
+    meal_type: "lunch",
+    name: "Quest bar — Cookies & Cream",
+    calories: 190,
+    protein: 21,
+    fat: 8,
+    carbs: 4,
+    notes: "21g protein per bar",
+  },
+  {
+    meal_type: "lunch",
+    name: "Mediterranean sample — rice, hummus, small meat",
+    calories: 170,
+    protein: 9,
+    fat: 8,
+    carbs: 16,
+    notes: "Est. ~4 small spoons rice + bit hummus + 1 small spoon mystery meat",
+  },
 ];
 
 async function main() {

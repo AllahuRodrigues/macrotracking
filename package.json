@@ -10,6 +10,7 @@
     "setup-supabase": "node scripts/setup-supabase.mjs",
     "migrate-to-supabase": "node scripts/migrate-sqlite-to-supabase.mjs",
     "sync-photos": "node scripts/sync-photos.mjs",
+    "sync-photos-june2": "node scripts/sync-photos-june2.mjs",
     "sync-user-data": "node scripts/sync-user-data.mjs"
   },
   "dependencies": {

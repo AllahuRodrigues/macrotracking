@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type { PhotoEntry } from "@/lib/types";
-import { PHOTO_CATEGORIES } from "@/lib/utils";
+import type { BodyMetric, PhotoEntry } from "@/lib/types";
 import { PhotoUpload, PhotoGallery } from "@/components/PhotoUpload";
+import { BodyProgressTracker } from "@/components/BodyProgressTracker";
 import { Card } from "@/components/ui";
 import { GuestBanner } from "@/components/GuestBanner";
 import { useAccess } from "@/context/AccessProvider";
@@ -11,57 +11,84 @@ import { useAccess } from "@/context/AccessProvider";
 export default function PhotosPage() {
   const { canWrite } = useAccess();
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
-  const [filter, setFilter] = useState<string>("all");
+  const [bodyMetrics, setBodyMetrics] = useState<BodyMetric[]>([]);
+  const [galleryFilter, setGalleryFilter] = useState<"meal" | "all">("meal");
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/photos");
-    setPhotos(await res.json());
+    const [photosRes, bodyRes] = await Promise.all([
+      fetch("/api/photos"),
+      fetch("/api/body?limit=30"),
+    ]);
+    setPhotos(await photosRes.json());
+    setBodyMetrics(await bodyRes.json());
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const nonBodyCount = photos.filter((p) => p.category !== "body" && p.category !== "progress").length;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Photo Tracking</h1>
         <p className="text-sm text-[var(--muted)]">
-          Upload meal pics, body progress shots, and comparison photos.
+          Body check-ins through Aug 1, 2026 — progress pics, weight, and meal photos.
         </p>
       </div>
 
       <GuestBanner />
 
+      <BodyProgressTracker photos={photos} bodyMetrics={bodyMetrics} />
+
       {canWrite && <PhotoUpload onUploaded={load} defaultCategory="body" />}
 
-      <Card
-        title="Gallery"
-        action={
-          <div className="flex gap-1">
-            <FilterBtn active={filter === "all"} onClick={() => setFilter("all")} label="All" />
-            {PHOTO_CATEGORIES.map((c) => (
-              <FilterBtn key={c} active={filter === c} onClick={() => setFilter(c)} label={c} />
-            ))}
-          </div>
-        }
-      >
-        <PhotoGallery
-          photos={photos}
-          filter={filter === "all" ? undefined : filter}
-          onDelete={
-            canWrite
-              ? async (id) => {
-                  await fetch(`/api/photos/${id}`, { method: "DELETE" });
-                  load();
-                }
-              : undefined
+      {nonBodyCount > 0 && (
+        <Card
+          title="Other photos"
+          action={
+            <div className="flex gap-1">
+              <FilterBtn
+                active={galleryFilter === "meal"}
+                onClick={() => setGalleryFilter("meal")}
+                label="Meals"
+              />
+              <FilterBtn
+                active={galleryFilter === "all"}
+                onClick={() => setGalleryFilter("all")}
+                label="All non-body"
+              />
+            </div>
           }
-        />
-      </Card>
+        >
+          <PhotoGallery
+            photos={photos.filter((p) => p.category !== "body" && p.category !== "progress")}
+            filter={galleryFilter === "meal" ? "meal" : undefined}
+            onDelete={
+              canWrite
+                ? async (id) => {
+                    await fetch(`/api/photos/${id}`, { method: "DELETE" });
+                    load();
+                  }
+                : undefined
+            }
+          />
+        </Card>
+      )}
     </div>
   );
 }
 
-function FilterBtn({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+function FilterBtn({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
   return (
     <button
       onClick={onClick}
