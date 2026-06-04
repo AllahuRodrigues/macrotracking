@@ -1,6 +1,6 @@
 /**
- * Log June 3, 2026 meals to Supabase
- * Run: node scripts/log-meals-june3.mjs
+ * Log June 4, 2026 meals to Supabase
+ * Run: node scripts/log-meals-june4.mjs
  */
 import fs from "fs";
 import path from "path";
@@ -10,7 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const DATE = "2026-06-03";
+const DATE = "2026-06-04";
 
 function loadEnv() {
   const envPath = path.join(root, ".env");
@@ -43,57 +43,12 @@ const supabase = createClient(url, key, {
 const MEALS = [
   {
     meal_type: "breakfast",
-    name: "Scrambled eggs — 3 whole + 2 whites, 3 tsp milk",
-    calories: 259,
-    protein: 27,
-    fat: 16,
-    carbs: 1,
-    notes: "3 eggs ~210/18P/15F · 2 whites ~34/8P · 3 tsp milk mixed in",
-  },
-  {
-    meal_type: "breakfast",
-    name: "Olive oil (2 tsp — pan for eggs)",
-    calories: 80,
-    protein: 0,
-    fat: 9,
-    carbs: 0,
-    notes: "Pan oil for scrambled eggs",
-  },
-  {
-    meal_type: "lunch",
-    name: "Factor — Smoky BBQ Chicken Breast (potato mash, creamed corn & peppers)",
-    calories: 680,
-    protein: 42,
-    fat: 33,
-    carbs: 52,
-    notes: "Full tray 15.1 oz / 428g — label: 680 kcal, 42g P, 52g C, 33g F",
-  },
-  {
-    meal_type: "dinner",
-    name: "Fanoos — Chicken Shawarma Wrap ×2 (small, Thoom garlic)",
-    calories: 620,
-    protein: 38,
-    fat: 24,
-    carbs: 58,
-    notes: "1 order = 2 hand-size lavash wraps · garlic paste, veggies, tahini · est. ~310 kcal/wrap",
-  },
-  {
-    meal_type: "snack",
-    name: "Oikos protein yogurt",
-    calories: 90,
-    protein: 15,
-    fat: 0,
-    carbs: 7,
-    notes: "Night",
-  },
-  {
-    meal_type: "snack",
-    name: "Protein shake — 3 scoops ON whey + 500 mL whole milk",
-    calories: 672,
-    protein: 89,
-    fat: 20,
-    carbs: 34,
-    notes: "Whey 360/72g P · whole milk 500mL ~312/17g P · night",
+    name: "Protein shake — 4 scoops ON whey + 80 mL whole milk + 10g creatine (400 mL shaker)",
+    calories: 530,
+    protein: 99,
+    fat: 7,
+    carbs: 16,
+    notes: "Whey 480/96g P · whole milk 80mL ~50/3g P · creatine 10g · rest water to 400mL",
   },
 ];
 
