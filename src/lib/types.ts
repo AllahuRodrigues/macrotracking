@@ -57,24 +57,24 @@ export interface MacroGoals {
 }
 
 export const DEFAULT_GOALS: MacroGoals = {
-  calories: 2250,
+  calories: 2200,
   protein: 200,
-  fat: 61,
-  carbs: 200,
+  fat: 55,
+  carbs: 220,
 };
 
 export const WORKOUT_DAY_GOALS: MacroGoals = {
   calories: 2200,
   protein: 200,
-  fat: 57,
-  carbs: 200,
+  fat: 55,
+  carbs: 220,
 };
 
 export const REST_DAY_GOALS: MacroGoals = {
-  calories: 2150,
+  calories: 1950,
   protein: 200,
-  fat: 70,
-  carbs: 165,
+  fat: 60,
+  carbs: 140,
 };
 
 export type DayType = "workout" | "rest";

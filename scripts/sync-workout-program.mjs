@@ -12,16 +12,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 
 function loadEnv() {
-  const envPath = path.join(root, ".env");
-  if (!fs.existsSync(envPath)) return;
-  for (const line of fs.readFileSync(envPath, "utf8").split("\n")) {
-    const t = line.trim();
-    if (!t || t.startsWith("#")) continue;
-    const i = t.indexOf("=");
-    if (i === -1) continue;
-    const k = t.slice(0, i);
-    const v = t.slice(i + 1);
-    if (!process.env[k]) process.env[k] = v;
+  for (const name of [".env.local", ".env"]) {
+    const p = path.join(root, name);
+    if (!fs.existsSync(p)) continue;
+    for (const line of fs.readFileSync(p, "utf8").split("\n")) {
+      const t = line.trim();
+      if (!t || t.startsWith("#")) continue;
+      const i = t.indexOf("=");
+      if (i === -1) continue;
+      const k = t.slice(0, i);
+      const v = t.slice(i + 1).replace(/^"(.*)"$/, "$1");
+      if (!process.env[k]) process.env[k] = v;
+    }
   }
 }
 
@@ -40,42 +42,75 @@ const supabase = createClient(url, key, {
 });
 
 // Keep in sync with src/lib/workout-program.ts
-const CHEST_TRICEPS = [
-  { name: "Chest flys", sets: "3", reps: "12–15" },
-  { name: "Cable machine chest variations", sets: "3", reps: "10–15" },
-  { name: "Tricep pushdown", sets: "4", reps: "10–15" },
-  { name: "Torso rotations", sets: "3", reps: "12–15 each side", notes: "Core / obliques" },
-  { name: "Bench press", sets: "4", reps: "6–10" },
-  { name: "Incline machine chest press", sets: "3", reps: "8–12" },
-  { name: "Forearm curls", sets: "3", reps: "12–15" },
-  { name: "Overhead tricep extension", sets: "3", reps: "10–15" },
-];
-
-const PULL = [
-  { name: "Diverging lat pull down", sets: "4", reps: "8–12" },
-  { name: "Rear delt fly", sets: "4", reps: "12–20" },
-  { name: "Deadlift", sets: "3", reps: "5–8" },
-  { name: "Shoulder press", sets: "4", reps: "6–10" },
-  { name: "Lateral raises", sets: "4", reps: "12–20" },
-  { name: "Bicep curls", sets: "3", reps: "8–12" },
-  { name: "Preacher curl", sets: "3", reps: "10–12" },
+const PULL_A = [
+  { name: "Pull-ups or assisted pull-ups", sets: "4", reps: "6–10" },
+  { name: "Wide/neutral lat pulldown", sets: "4", reps: "8–12" },
+  { name: "Chest-supported row", sets: "3", reps: "8–12" },
+  { name: "Single-arm lat pulldown", sets: "3", reps: "10–15" },
+  { name: "Straight-arm pulldown", sets: "3", reps: "12–15" },
+  { name: "Rear delt fly", sets: "4", reps: "15–20" },
+  { name: "Barbell or machine curl", sets: "3", reps: "8–12" },
   { name: "Hammer curl", sets: "3", reps: "10–15" },
-  { name: "Shoulder machine press", sets: "3", reps: "8–12" },
-  { name: "Torso rotations", sets: "3", reps: "12–15 each side" },
-  { name: "Farmers carry", sets: "3", reps: "40–60 sec", notes: "Heavy dumbbells or kettlebells" },
+  { name: "Stomach vacuums", sets: "3", reps: "20–30 sec" },
 ];
 
-const LEGS = [
-  { name: "Walking lunges", sets: "3", reps: "12 steps each leg" },
-  { name: "Leg curls", sets: "3", reps: "10–15" },
-  { name: "Hamstring curls", sets: "3", reps: "10–15" },
+const PUSH_A = [
+  { name: "Incline bench press or incline DB press", sets: "4", reps: "6–10" },
+  { name: "Flat machine chest press", sets: "3", reps: "8–12" },
+  { name: "Shoulder press", sets: "3", reps: "6–10" },
+  { name: "Lateral raises", sets: "5", reps: "12–20" },
+  { name: "Cable lateral raises", sets: "3", reps: "15–20" },
+  { name: "Low-to-high cable fly", sets: "3", reps: "12–15" },
+  { name: "Tricep pushdown", sets: "3", reps: "10–15" },
+  { name: "Overhead tricep extension", sets: "3", reps: "10–15" },
+  { name: "Hanging leg raises", sets: "3", reps: "10–15" },
+];
+
+const LOWER_A = [
+  { name: "A-skips", sets: "2", reps: "20 m", notes: "Speed block — before lifting if possible" },
+  { name: "High knees", sets: "2", reps: "20 m" },
+  { name: "Sprints", sets: "6", reps: "15–20 sec", notes: "90–150 sec rest; bike sprints 8×10 sec if no track" },
+  { name: "Back squat", sets: "4", reps: "5–8" },
+  { name: "Romanian deadlift", sets: "3", reps: "6–10" },
+  { name: "Leg press", sets: "3", reps: "10–15" },
+  { name: "Leg curl", sets: "3", reps: "10–15" },
+  { name: "Bulgarian split squat or walking lunges", sets: "3", reps: "10 each leg" },
+  { name: "Standing calf raises", sets: "5", reps: "10–20" },
+  { name: "Cable crunches", sets: "3", reps: "12–15" },
+];
+
+const PULL_B = [
+  { name: "Barbell row or machine row", sets: "4", reps: "6–10" },
+  { name: "Neutral-grip lat pulldown", sets: "4", reps: "8–12" },
+  { name: "Seated cable row", sets: "3", reps: "10–12" },
+  { name: "Machine pullover or straight-arm pulldown", sets: "3", reps: "12–15" },
+  { name: "Rear delt fly / face pull", sets: "4", reps: "15–20" },
+  { name: "Preacher curl", sets: "3", reps: "10–12" },
+  { name: "Incline DB curl", sets: "3", reps: "10–15" },
+  { name: "Farmer's carry", sets: "3", reps: "40–60 sec", notes: "Heavy dumbbells or kettlebells" },
+  { name: "Stomach vacuums", sets: "3", reps: "20–30 sec" },
+];
+
+const PUSH_B = [
+  { name: "Flat bench press", sets: "4", reps: "5–8" },
+  { name: "Incline machine press", sets: "3", reps: "8–12" },
+  { name: "Machine shoulder press", sets: "3", reps: "8–12" },
+  { name: "Lateral raises", sets: "5", reps: "15–25" },
+  { name: "Cable lateral raises", sets: "3", reps: "15–20" },
+  { name: "Pec deck or cable fly", sets: "3", reps: "12–15" },
+  { name: "Tricep pushdown", sets: "3", reps: "10–15" },
+  { name: "Overhead tricep extension or skull crushers", sets: "3", reps: "10–15" },
+  { name: "Hanging leg raise or ab wheel", sets: "3", reps: "10–15" },
+];
+
+const LOWER_B = [
+  { name: "Trap-bar deadlift or front squat", sets: "3", reps: "4–6" },
+  { name: "Hip thrust", sets: "3", reps: "8–12" },
+  { name: "Leg extension", sets: "3", reps: "12–15" },
+  { name: "Hamstring curl", sets: "3", reps: "10–15" },
+  { name: "Walking lunges", sets: "2", reps: "12 steps each leg" },
   { name: "Calf raises", sets: "4", reps: "12–20" },
-  { name: "Hip thrust", sets: "4", reps: "8–12" },
-  { name: "Closing hip / open hip", sets: "2", reps: "10–12 each", notes: "Hip mobility" },
-  { name: "Squats", sets: "4", reps: "6–10" },
-  { name: "Wrist curl", sets: "3", reps: "12–15" },
-  { name: "Torso rotations", sets: "3", reps: "12–15 each side" },
-  { name: "Leg raises", sets: "3", reps: "10–15" },
+  { name: "Plank or cable crunch", sets: "3", reps: "30–45 sec / 12–15" },
 ];
 
 const REST = [
@@ -85,13 +120,13 @@ const REST = [
 ];
 
 const PROGRAM = [
-  { weekDay: 0, dayName: "Rest", label: "Sunday — Rest / Active Recovery", muscleGroups: "Mobility, Steps", goal: "Recover. Light steps and stretching only.", cardio: "8,000–12,000 steps walking", exercises: REST },
-  { weekDay: 1, dayName: "Chest + Triceps", label: "Monday — Chest + Triceps", muscleGroups: "Chest, Triceps, Forearms, Core", goal: "Chest volume, triceps, and core rotation work.", cardio: "50 min walk on active days (~200 kcal burn)", exercises: CHEST_TRICEPS },
-  { weekDay: 2, dayName: "Pull", label: "Tuesday — Pull + Shoulders + Arms", muscleGroups: "Back, Rear Delts, Shoulders, Biceps, Core", goal: "Lats, deadlift strength, shoulders, and arm hypertrophy.", cardio: "50 min walk optional after lifting", exercises: PULL },
-  { weekDay: 3, dayName: "Legs", label: "Wednesday — Legs", muscleGroups: "Quads, Hamstrings, Glutes, Calves, Core", goal: "Leg strength and glute focus.", cardio: "10–15 min easy walk — legs day", exercises: LEGS },
-  { weekDay: 4, dayName: "Pull", label: "Thursday — Pull + Shoulders + Arms", muscleGroups: "Back, Rear Delts, Shoulders, Biceps, Core", goal: "Same as Tuesday — back width, shoulders, arms.", cardio: "50 min walk optional after lifting", exercises: PULL },
-  { weekDay: 5, dayName: "Chest + Triceps", label: "Friday — Chest + Triceps", muscleGroups: "Chest, Triceps, Forearms, Core", goal: "Repeat Monday chest + triceps session.", cardio: "50 min walk on active days (~200 kcal burn)", exercises: CHEST_TRICEPS },
-  { weekDay: 6, dayName: "Legs", label: "Saturday — Legs", muscleGroups: "Quads, Hamstrings, Glutes, Calves, Core", goal: "Repeat Wednesday leg session.", cardio: "10–15 min easy walk or conditioning", exercises: LEGS },
+  { weekDay: 0, dayName: "Rest", label: "Sunday — Rest / Active Recovery", muscleGroups: "Mobility, Steps", goal: "Recover. Light steps and stretching only.", cardio: "8,000–12,000 steps · no hard training", exercises: REST },
+  { weekDay: 1, dayName: "Pull A", label: "Monday — Pull A", muscleGroups: "Lats, Rear Delts, Biceps, Core", goal: "Back width, lats, rear delts, and arm work.", cardio: "20–30 min incline walk or zone 2 after lifting", exercises: PULL_A },
+  { weekDay: 2, dayName: "Push A", label: "Tuesday — Push A", muscleGroups: "Upper Chest, Shoulders, Triceps, Core", goal: "Upper chest emphasis, shoulder volume, triceps.", cardio: "20–30 min incline walk after lifting", exercises: PUSH_A },
+  { weekDay: 3, dayName: "Lower A", label: "Wednesday — Lower A + Speed", muscleGroups: "Quads, Hamstrings, Glutes, Calves, Core", goal: "Leg strength plus speed block before compounds.", cardio: "Easy walking only — no long cardio after lifting", exercises: LOWER_A },
+  { weekDay: 4, dayName: "Pull B", label: "Thursday — Pull B", muscleGroups: "Back, Rear Delts, Biceps, Core", goal: "Back thickness, rows, pulldowns, arms.", cardio: "20–30 min zone 2 after lifting", exercises: PULL_B },
+  { weekDay: 5, dayName: "Push B", label: "Friday — Push B", muscleGroups: "Chest, Shoulders, Triceps, Core", goal: "Heavy chest, high lateral raise volume, triceps.", cardio: "20–30 min incline walk after lifting", exercises: PUSH_B },
+  { weekDay: 6, dayName: "Lower B", label: "Saturday — Lower B + Conditioning", muscleGroups: "Quads, Hamstrings, Glutes, Calves, Core", goal: "Athletic legs plus conditioning finish.", cardio: "30–40 min zone 2 treadmill, bike, or walk intervals", exercises: LOWER_B },
 ];
 
 async function upsertDay(day) {

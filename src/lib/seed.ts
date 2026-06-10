@@ -75,8 +75,8 @@ function seedProfile(db: Database.Database) {
     id: "me", name: "Allahu", age: 23, height: "5′6.5″",
     goal: "Cut — 187 lb → 174–176 lb @ 14–16% BF (8–10 weeks · 1.5 lb/week)",
     avatar_filename: "profile-avatar.png",
-    target_calories: 2250, target_protein: 200, target_fat: 61, target_carbs: 200,
-    notes: "InBody Score 88. Upper body dominant. Main target: trunk fat. Current: 189.6 lb / 24% BF / 85.1 lb SMM. Fitness SF trainer. PPL Mon–Sat + 1hr treadmill daily.",
+    target_calories: 2200, target_protein: 200, target_fat: 55, target_carbs: 220,
+    notes: "Cut to 174 lb by Aug 1. Training days: 2200 kcal / 200P / 220C / 55F. Rest days: 1950 kcal / 200P / 140C / 60F. Pull-Push-Lower split Mon–Sat. Fitness SF.",
     updated_at: new Date().toISOString(),
   });
 }
