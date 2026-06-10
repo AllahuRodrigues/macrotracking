@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { BodyMetric } from "@/lib/types";
 import { BodyMetricForm, BodyMetricList } from "@/components/BodyMetricForm";
+import { InBodyReportCard } from "@/components/InBodyReportCard";
 import { Card } from "@/components/ui";
 
 export default function BodyPage() {
@@ -57,6 +58,8 @@ export default function BodyPage() {
           )}
         </div>
       )}
+
+      <InBodyReportCard />
 
       <BodyMetricForm
         onSaved={load}

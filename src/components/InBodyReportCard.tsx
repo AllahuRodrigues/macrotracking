@@ -188,19 +188,69 @@ export function InBodyReportCard() {
         </ul>
       </div>
 
-      <details className="mt-4 rounded-xl border border-[var(--card-border)] bg-[var(--background)] p-3">
-        <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
-          BioAge App Data
-        </summary>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <MetricRow label="Strength BioAge" value={`${r.bioAge.strengthBioAge} yrs`} />
-          <MetricRow label="Upper Body Age" value={`${r.bioAge.upperBodyStrengthAge} yrs`} />
-          <MetricRow label="Lower Body Age" value={`${r.bioAge.lowerBodyStrengthAge} yrs`} />
-          <MetricRow label="EGYM Chest Press" value={`${r.bioAge.egymChestPressLb} lb`} />
-          <MetricRow label="App BF %" value={`${r.bioAge.appView.bodyFatPct}%`} />
-          <MetricRow label="App Muscle Mass" value={`${r.bioAge.appView.skeletalMuscleMassLb} lb`} />
+      {/* EGYM Strength */}
+      <div className="mt-4 rounded-xl border border-[var(--card-border)] bg-[var(--background)] p-3">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+            EGYM Strength — Fitness SF
+          </p>
+          <div className="flex gap-2 text-xs">
+            <span className="rounded-full bg-[var(--accent)]/15 px-2 py-0.5 font-semibold text-[var(--accent)]">
+              BioAge {r.bioAge.strengthBioAge} yrs
+            </span>
+            <span className="rounded-full bg-green-500/15 px-2 py-0.5 font-semibold text-green-400">
+              {r.bioAge.egymRanking}
+            </span>
+          </div>
         </div>
-      </details>
+
+        <div className="mb-3 grid grid-cols-3 gap-2">
+          <div className="rounded-lg border border-[var(--card-border)] p-2 text-center">
+            <p className="text-[10px] text-[var(--muted)]">Upper BioAge</p>
+            <p className="text-sm font-bold text-[var(--accent)]">{r.bioAge.upperBodyStrengthAge} yrs</p>
+            <p className="text-[9px] text-[var(--muted)]">real age 23</p>
+          </div>
+          <div className="rounded-lg border border-[var(--card-border)] p-2 text-center">
+            <p className="text-[10px] text-[var(--muted)]">Lower BioAge</p>
+            <p className="text-sm font-bold text-[var(--accent-warm)]">{r.bioAge.lowerBodyStrengthAge} yrs</p>
+            <p className="text-[9px] text-[var(--muted)]">real age 23</p>
+          </div>
+          <div className="rounded-lg border border-[var(--card-border)] p-2 text-center">
+            <p className="text-[10px] text-[var(--muted)]">Activity Pts</p>
+            <p className="text-sm font-bold">{r.bioAge.egymActivityPoints}</p>
+            <p className="text-[9px] text-green-400">Top 10%</p>
+          </div>
+        </div>
+
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">Upper Body</p>
+        <div className="grid grid-cols-2 gap-1.5 mb-3">
+          {[
+            { label: "Chest Press", value: r.bioAge.egymChestPressLb },
+            { label: "Shoulder Press", value: r.bioAge.egymShoulderPressLb },
+            { label: "Lat Pulldown", value: r.bioAge.egymLatPulldownLb },
+            { label: "Seated Row", value: r.bioAge.egymSeatedRowLb },
+          ].map((e) => (
+            <div key={e.label} className="flex items-center justify-between rounded-lg border border-[var(--card-border)] px-2.5 py-2">
+              <span className="text-xs text-[var(--muted)]">{e.label}</span>
+              <span className="text-sm font-bold">{e.value} <span className="text-[10px] font-normal text-[var(--muted)]">lb</span></span>
+            </div>
+          ))}
+        </div>
+
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">Lower Body</p>
+        <div className="grid grid-cols-3 gap-1.5">
+          {[
+            { label: "Leg Extension", value: r.bioAge.egymLegExtensionLb },
+            { label: "Leg Press", value: r.bioAge.egymLegPressLb },
+            { label: "Leg Curl", value: r.bioAge.egymLegCurlLb },
+          ].map((e) => (
+            <div key={e.label} className="flex flex-col items-center rounded-lg border border-[var(--card-border)] px-2 py-2 text-center">
+              <span className="text-[10px] text-[var(--muted)]">{e.label}</span>
+              <span className="text-sm font-bold">{e.value} <span className="text-[10px] font-normal text-[var(--muted)]">lb</span></span>
+            </div>
+          ))}
+        </div>
+      </div>
     </Card>
   );
 }

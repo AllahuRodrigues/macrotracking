@@ -12,9 +12,11 @@ export async function GET(req: NextRequest) {
   }
 
   const templates = await getWorkoutTemplates();
-  const full = templates.map((t) => ({
-    template: t,
-    exercises: getTemplateExercises(t.id),
-  }));
+  const full = await Promise.all(
+    templates.map(async (t) => ({
+      template: t,
+      exercises: await getTemplateExercises(t.id),
+    }))
+  );
   return NextResponse.json(full);
 }

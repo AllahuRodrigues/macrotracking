@@ -35,27 +35,54 @@ export default function WorkoutPage() {
   const [elapsed, setElapsed] = useState(0);
 
   const loadToday = useCallback(async () => {
-    const [tmplRes, sessionRes, waterRes] = await Promise.all([
-      fetch(`/api/templates?day=${today}`),
-      fetch(`/api/workouts?date=${date}`),
-      fetch(`/api/water?date=${date}`),
-    ]);
-    const tmpl = await tmplRes.json();
-    if (tmpl) { setTemplate(tmpl.template); setTemplateExercises(tmpl.exercises); }
-    const sess = await sessionRes.json();
-    if (sess) { setSession(sess.session); setSessionExercises(sess.exercises); }
-    const water = await waterRes.json();
-    setWaterMl(water.total_ml ?? 0);
+    try {
+      const [tmplRes, sessionRes, waterRes] = await Promise.all([
+        fetch(`/api/templates?day=${today}`),
+        fetch(`/api/workouts?date=${date}`),
+        fetch(`/api/water?date=${date}`),
+      ]);
+      const tmpl = await tmplRes.json().catch(() => null);
+      if (tmpl?.template) {
+        setTemplate(tmpl.template);
+        setTemplateExercises(Array.isArray(tmpl.exercises) ? tmpl.exercises : []);
+      }
+      const sess = await sessionRes.json().catch(() => null);
+      if (sess?.session) {
+        setSession(sess.session);
+        setSessionExercises(Array.isArray(sess.exercises) ? sess.exercises : []);
+      }
+      const water = await waterRes.json().catch(() => ({}));
+      setWaterMl(water.total_ml ?? 0);
+    } catch (e) {
+      console.error("loadToday error", e);
+    }
   }, [date, today]);
 
   const loadHistory = useCallback(async () => {
-    const res = await fetch("/api/workouts?limit=20");
-    setHistory(await res.json());
+    try {
+      const res = await fetch("/api/workouts?limit=20");
+      const data = await res.json().catch(() => []);
+      setHistory(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("loadHistory error", e);
+    }
   }, []);
 
   const loadProgram = useCallback(async () => {
-    const res = await fetch("/api/templates");
-    setAllTemplates(await res.json());
+    try {
+      const res = await fetch("/api/templates");
+      const data = await res.json().catch(() => []);
+      setAllTemplates(
+        Array.isArray(data)
+          ? data.map((d: { template: WorkoutTemplate; exercises: TemplateExercise[] }) => ({
+              template: d.template,
+              exercises: Array.isArray(d.exercises) ? d.exercises : [],
+            }))
+          : []
+      );
+    } catch (e) {
+      console.error("loadProgram error", e);
+    }
   }, []);
 
   useEffect(() => { loadToday(); }, [loadToday]);
@@ -238,8 +265,7 @@ export default function WorkoutPage() {
                 <div className="mt-3 flex items-center justify-between rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     <Flame size={15} className="text-orange-400" />
-                    <span className="text-sm font-medium">Treadmill — 1 hour</span>
-                    <span className="text-xs text-[var(--muted)]">{template.cardio}</span>
+                    <span className="text-sm font-medium text-[var(--muted)]">{template.cardio}</span>
                   </div>
                   <button onClick={() => markCardio(!session?.cardio_done)}>
                     {session?.cardio_done
@@ -250,23 +276,33 @@ export default function WorkoutPage() {
               </div>
 
               <div className="space-y-2">
-                {(session ? sessionExercises : templateExercises.map((te) => ({
-                  id: te.id,
-                  name: te.name,
-                  sets_prescribed: te.sets_prescribed,
-                  reps_prescribed: te.reps_prescribed,
-                  sets_data: "[]",
-                  notes: te.notes,
-                }))).map((ex) => (
-                  <ExerciseRow
-                    key={ex.id}
-                    ex={ex as SessionExercise}
-                    sessionActive={!!session}
-                    expanded={expandedExercise === ex.id}
-                    onToggle={() => setExpandedExercise(expandedExercise === ex.id ? null : ex.id)}
-                    onLogSet={(w, r) => logSet(ex.id, (ex as SessionExercise).sets_data ?? "[]", w, r)}
-                  />
-                ))}
+                {(() => {
+                  // Use session exercises only when session is linked to today's template
+                  const useSession = session && session.template_id === template.id;
+                  const displayExercises = useSession
+                    ? sessionExercises
+                    : templateExercises.map((te) => ({
+                        id: te.id,
+                        session_id: "",
+                        template_exercise_id: te.id,
+                        name: te.name,
+                        sets_prescribed: te.sets_prescribed,
+                        reps_prescribed: te.reps_prescribed,
+                        sets_data: "[]",
+                        order_idx: te.order_idx,
+                        notes: te.notes,
+                      }));
+                  return displayExercises.map((ex) => (
+                    <ExerciseRow
+                      key={ex.id}
+                      ex={ex as SessionExercise}
+                      sessionActive={!!useSession}
+                      expanded={expandedExercise === ex.id}
+                      onToggle={() => setExpandedExercise(expandedExercise === ex.id ? null : ex.id)}
+                      onLogSet={(w, r) => logSet(ex.id, (ex as SessionExercise).sets_data ?? "[]", w, r)}
+                    />
+                  ));
+                })()}
               </div>
             </Card>
           ) : (
@@ -455,7 +491,7 @@ function ProgramDay({
       {open && (
         <div className="mt-3 space-y-2">
           <p className="text-xs italic text-[var(--accent)]">{template.goal}</p>
-          {exercises.map((e, i) => (
+          {(Array.isArray(exercises) ? exercises : []).map((e, i) => (
             <div key={e.id} className="flex items-start gap-2.5 py-1.5 border-t border-[var(--card-border)] first:border-0">
               <span className="mt-0.5 text-xs text-[var(--muted)] w-4 shrink-0">{i + 1}</span>
               <div className="min-w-0">
