@@ -1,6 +1,6 @@
 /**
- * Log June 4, 2026 meals to Supabase
- * Run: node scripts/log-meals-june4.mjs
+ * Log June 6, 2026 meals to Supabase
+ * Run: node scripts/log-meals-june6.mjs
  */
 import fs from "fs";
 import path from "path";
@@ -10,7 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const DATE = "2026-06-04";
+const DATE = "2026-06-06";
 
 function loadEnv() {
   const envPath = path.join(root, ".env");
@@ -43,66 +43,66 @@ const supabase = createClient(url, key, {
 const MEALS = [
   {
     meal_type: "breakfast",
-    name: "Protein shake — 4 scoops ON whey + 80 mL whole milk + 10g creatine (400 mL shaker)",
-    calories: 530,
-    protein: 99,
-    fat: 7,
-    carbs: 16,
-    notes: "Whey 480/96g P · whole milk 80mL ~50/3g P · creatine 10g · rest water to 400mL",
+    name: "Quest protein bar",
+    calories: 190,
+    protein: 21,
+    fat: 8,
+    carbs: 4,
+    notes: "Label: 190 kcal, 21g P, 4g net carbs",
   },
   {
     meal_type: "lunch",
-    name: "Fanoos — Chicken Shawarma Wrap ×2 (small, Shata S)",
-    calories: 645,
-    protein: 38,
+    name: "Factor — Pesto Chicken & Quinoa (peppers, squash & carrots)",
+    calories: 590,
+    protein: 43,
+    fat: 25,
+    carbs: 42,
+    notes: "Full tray 14 oz / 397g — label: 590 kcal, 43g P, 42g C, 25g F",
+  },
+  {
+    meal_type: "lunch",
+    name: "Factor — Ginger Teriyaki Salmon (forbidden rice & sesame green beans)",
+    calories: 610,
+    protein: 36,
     fat: 26,
-    carbs: 60,
-    notes: "1 order = 2 lavash wraps · garlic, veggies, sumac onion, tahini, pomegranate molasses · Shata (S) · ~1pm",
+    carbs: 61,
+    notes: "Full tray 14.2 oz / 403g — label: 610 kcal, 36g P, 61g C, 26g F",
   },
   {
     meal_type: "dinner",
-    name: "Fanoos — Shawarma ×2 + fries + hummus + garlic sauce",
-    calories: 1270,
-    protein: 48,
-    fat: 65,
-    carbs: 119,
-    notes: "2 wraps ~620 · small fries ~340 · hummus side ~180 · 2 toum cups ~130",
+    name: "In-N-Out Double-Double ×2",
+    calories: 1340,
+    protein: 74,
+    fat: 78,
+    carbs: 82,
+    notes: "670 kcal each per In-N-Out nutrition · ~9pm",
   },
   {
     meal_type: "dinner",
-    name: "Trader Joe's Pita Bite Crackers (handful ~8 crackers)",
-    calories: 95,
-    protein: 2,
-    fat: 3,
-    carbs: 15,
-    notes: "Not full serving — ~8 of 11-cracker serving (130 kcal)",
+    name: "In-N-Out french fries (1 order)",
+    calories: 395,
+    protein: 7,
+    fat: 18,
+    carbs: 54,
+    notes: "Regular fries · ~9pm",
   },
   {
     meal_type: "dinner",
-    name: "Trader Joe's Peppered Uncured Salami (8 slices)",
-    calories: 280,
-    protein: 16,
-    fat: 24,
-    carbs: 1,
-    notes: "8 slices only — not full 10 oz pack",
-  },
-  {
-    meal_type: "snack",
-    name: "Corona (1 bottle)",
-    calories: 148,
-    protein: 1,
-    fat: 0,
-    carbs: 14,
-    notes: "~12 oz · ~11pm",
-  },
-  {
-    meal_type: "snack",
-    name: "Hard cider (1 full red solo cup)",
-    calories: 210,
+    name: "Coke (1 cup)",
+    calories: 150,
     protein: 0,
     fat: 0,
-    carbs: 28,
-    notes: "Est. ~16 oz pour · ~11pm",
+    carbs: 39,
+    notes: "~9pm · water also (0 cal, not logged)",
+  },
+  {
+    meal_type: "snack",
+    name: "Popcorn (11 pieces)",
+    calories: 60,
+    protein: 1,
+    fat: 3,
+    carbs: 6,
+    notes: "Exactly 11 pieces — small est. ~5–6 kcal/piece",
   },
 ];
 

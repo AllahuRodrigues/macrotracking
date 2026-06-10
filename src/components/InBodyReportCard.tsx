@@ -193,12 +193,12 @@ export function InBodyReportCard() {
           BioAge App Data
         </summary>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          <MetricRow label="Strength Age" value={`${r.bioAge.strengthAge} yrs`} />
-          <MetricRow label="Flexibility Age" value={`${r.bioAge.flexibilityAge} yrs`} />
-          <MetricRow label="Metabolism Age" value={`${r.bioAge.metabolismAge} yrs`} />
+          <MetricRow label="Strength BioAge" value={`${r.bioAge.strengthBioAge} yrs`} />
+          <MetricRow label="Upper Body Age" value={`${r.bioAge.upperBodyStrengthAge} yrs`} />
+          <MetricRow label="Lower Body Age" value={`${r.bioAge.lowerBodyStrengthAge} yrs`} />
           <MetricRow label="EGYM Chest Press" value={`${r.bioAge.egymChestPressLb} lb`} />
           <MetricRow label="App BF %" value={`${r.bioAge.appView.bodyFatPct}%`} />
-          <MetricRow label="App Muscle Mass" value={`${r.bioAge.appView.muscleMassLb} lb`} />
+          <MetricRow label="App Muscle Mass" value={`${r.bioAge.appView.skeletalMuscleMassLb} lb`} />
         </div>
       </details>
     </Card>

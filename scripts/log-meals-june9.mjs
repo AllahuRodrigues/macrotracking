@@ -1,6 +1,6 @@
 /**
- * Log June 4, 2026 meals to Supabase
- * Run: node scripts/log-meals-june4.mjs
+ * Log June 9, 2026 meals to Supabase
+ * Run: node scripts/log-meals-june9.mjs
  */
 import fs from "fs";
 import path from "path";
@@ -10,7 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const DATE = "2026-06-04";
+const DATE = "2026-06-09";
 
 function loadEnv() {
   const envPath = path.join(root, ".env");
@@ -43,66 +43,48 @@ const supabase = createClient(url, key, {
 const MEALS = [
   {
     meal_type: "breakfast",
-    name: "Protein shake — 4 scoops ON whey + 80 mL whole milk + 10g creatine (400 mL shaker)",
-    calories: 530,
-    protein: 99,
-    fat: 7,
-    carbs: 16,
-    notes: "Whey 480/96g P · whole milk 80mL ~50/3g P · creatine 10g · rest water to 400mL",
-  },
-  {
-    meal_type: "lunch",
-    name: "Fanoos — Chicken Shawarma Wrap ×2 (small, Shata S)",
-    calories: 645,
-    protein: 38,
-    fat: 26,
-    carbs: 60,
-    notes: "1 order = 2 lavash wraps · garlic, veggies, sumac onion, tahini, pomegranate molasses · Shata (S) · ~1pm",
+    name: "Factor — Tangy Southern Chicken (red potatoes & creamed corn)",
+    calories: 680,
+    protein: 40,
+    fat: 32,
+    carbs: 40,
+    notes: "Full tray 12.2 oz / 346g — label: 680 kcal, 40g P, 40g C; fat est.",
   },
   {
     meal_type: "dinner",
-    name: "Fanoos — Shawarma ×2 + fries + hummus + garlic sauce",
-    calories: 1270,
+    name: "Factor — Caramelized Onion Gournay Burger (spinach & paprika roasted potatoes) ×2",
+    calories: 1180,
+    protein: 62,
+    fat: 68,
+    carbs: 74,
+    notes: "2 full trays 11.3 oz / 320g each — label: 590 kcal, 31g P, 37g C, 34g F per tray",
+  },
+  {
+    meal_type: "snack",
+    name: "Quest bar — Cookies & Cream (afternoon)",
+    calories: 190,
+    protein: 21,
+    fat: 8,
+    carbs: 4,
+    notes: "Label: 190 kcal, 21g P, 4g net carbs",
+  },
+  {
+    meal_type: "snack",
+    name: "Quest bar — Cookies & Cream (dinner snack)",
+    calories: 190,
+    protein: 21,
+    fat: 8,
+    carbs: 4,
+    notes: "Label: 190 kcal, 21g P, 4g net carbs",
+  },
+  {
+    meal_type: "snack",
+    name: "Protein shake — 2 scoops ON whey + 10g creatine (400 mL shaker, water)",
+    calories: 240,
     protein: 48,
-    fat: 65,
-    carbs: 119,
-    notes: "2 wraps ~620 · small fries ~340 · hummus side ~180 · 2 toum cups ~130",
-  },
-  {
-    meal_type: "dinner",
-    name: "Trader Joe's Pita Bite Crackers (handful ~8 crackers)",
-    calories: 95,
-    protein: 2,
-    fat: 3,
-    carbs: 15,
-    notes: "Not full serving — ~8 of 11-cracker serving (130 kcal)",
-  },
-  {
-    meal_type: "dinner",
-    name: "Trader Joe's Peppered Uncured Salami (8 slices)",
-    calories: 280,
-    protein: 16,
-    fat: 24,
-    carbs: 1,
-    notes: "8 slices only — not full 10 oz pack",
-  },
-  {
-    meal_type: "snack",
-    name: "Corona (1 bottle)",
-    calories: 148,
-    protein: 1,
-    fat: 0,
-    carbs: 14,
-    notes: "~12 oz · ~11pm",
-  },
-  {
-    meal_type: "snack",
-    name: "Hard cider (1 full red solo cup)",
-    calories: 210,
-    protein: 0,
-    fat: 0,
-    carbs: 28,
-    notes: "Est. ~16 oz pour · ~11pm",
+    fat: 2,
+    carbs: 6,
+    notes: "Whey 240/48g P · creatine 10g · shaker filled to 400mL with water",
   },
 ];
 

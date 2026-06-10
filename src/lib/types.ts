@@ -64,10 +64,10 @@ export const DEFAULT_GOALS: MacroGoals = {
 };
 
 export const WORKOUT_DAY_GOALS: MacroGoals = {
-  calories: 2300,
+  calories: 2200,
   protein: 200,
   fat: 57,
-  carbs: 220,
+  carbs: 200,
 };
 
 export const REST_DAY_GOALS: MacroGoals = {

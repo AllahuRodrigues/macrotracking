@@ -1,6 +1,6 @@
 /**
- * Log June 4, 2026 meals to Supabase
- * Run: node scripts/log-meals-june4.mjs
+ * Log June 5, 2026 meals to Supabase
+ * Run: node scripts/log-meals-june5.mjs
  */
 import fs from "fs";
 import path from "path";
@@ -10,7 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const DATE = "2026-06-04";
+const DATE = "2026-06-05";
 
 function loadEnv() {
   const envPath = path.join(root, ".env");
@@ -42,67 +42,58 @@ const supabase = createClient(url, key, {
 
 const MEALS = [
   {
-    meal_type: "breakfast",
-    name: "Protein shake — 4 scoops ON whey + 80 mL whole milk + 10g creatine (400 mL shaker)",
-    calories: 530,
-    protein: 99,
-    fat: 7,
-    carbs: 16,
-    notes: "Whey 480/96g P · whole milk 80mL ~50/3g P · creatine 10g · rest water to 400mL",
+    meal_type: "lunch",
+    name: "Fanoos — Chicken Shawarma Wrap ×2 (small)",
+    calories: 620,
+    protein: 38,
+    fat: 24,
+    carbs: 58,
+    notes: "1 order = 2 hand-size lavash wraps · chicken, veggies, tahini, sumac onion",
   },
   {
     meal_type: "lunch",
-    name: "Fanoos — Chicken Shawarma Wrap ×2 (small, Shata S)",
-    calories: 645,
-    protein: 38,
-    fat: 26,
-    carbs: 60,
-    notes: "1 order = 2 lavash wraps · garlic, veggies, sumac onion, tahini, pomegranate molasses · Shata (S) · ~1pm",
+    name: "Garlic white sauce (toum)",
+    calories: 80,
+    protein: 0,
+    fat: 9,
+    carbs: 2,
+    notes: "Side white garlic sauce with shawarma",
   },
   {
-    meal_type: "dinner",
-    name: "Fanoos — Shawarma ×2 + fries + hummus + garlic sauce",
-    calories: 1270,
-    protein: 48,
-    fat: 65,
-    carbs: 119,
-    notes: "2 wraps ~620 · small fries ~340 · hummus side ~180 · 2 toum cups ~130",
-  },
-  {
-    meal_type: "dinner",
-    name: "Trader Joe's Pita Bite Crackers (handful ~8 crackers)",
-    calories: 95,
+    meal_type: "lunch",
+    name: "Hummus (4 tsp from large container)",
+    calories: 55,
     protein: 2,
     fat: 3,
-    carbs: 15,
-    notes: "Not full serving — ~8 of 11-cracker serving (130 kcal)",
+    carbs: 5,
+    notes: "Big container — only ~4 teaspoon scoops eaten",
+  },
+  {
+    meal_type: "snack",
+    name: "Tequila (2 shots)",
+    calories: 194,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    notes: "~1.5 oz each · ~97 kcal/shot",
+  },
+  {
+    meal_type: "snack",
+    name: "Gin (3 shots)",
+    calories: 291,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    notes: "~1.5 oz each · ~97 kcal/shot",
   },
   {
     meal_type: "dinner",
-    name: "Trader Joe's Peppered Uncured Salami (8 slices)",
-    calories: 280,
-    protein: 16,
-    fat: 24,
-    carbs: 1,
-    notes: "8 slices only — not full 10 oz pack",
-  },
-  {
-    meal_type: "snack",
-    name: "Corona (1 bottle)",
-    calories: 148,
-    protein: 1,
+    name: "Unknown meal (forgot item)",
+    calories: 600,
+    protein: 35,
     fat: 0,
-    carbs: 14,
-    notes: "~12 oz · ~11pm",
-  },
-  {
-    meal_type: "snack",
-    name: "Hard cider (1 full red solo cup)",
-    calories: 210,
-    protein: 0,
-    fat: 0,
-    carbs: 28,
-    notes: "Est. ~16 oz pour · ~11pm",
+    carbs: 0,
+    notes: "User estimate — 600 kcal, 35g protein; item not remembered",
   },
 ];
 

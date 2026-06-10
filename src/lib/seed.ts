@@ -1,5 +1,6 @@
 import type Database from "better-sqlite3";
 import { v4 as uuidv4 } from "uuid";
+import { OFFICIAL_WORKOUT_PROGRAM } from "./workout-program";
 
 const FOOD_DATE = "2026-05-28";
 const INBODY_DATE = "2026-05-22";
@@ -103,10 +104,8 @@ function seedSupplements(db: Database.Database) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PPL Workout Program Seed
+// Official Workout Program (see workout-program.ts)
 // ─────────────────────────────────────────────────────────────────────────────
-
-type ExerciseDef = { name: string; sets: string; reps: string; notes?: string };
 
 function seedWorkoutProgram(db: Database.Database) {
   const count = db.prepare("SELECT COUNT(*) as c FROM workout_templates").get() as { c: number };
@@ -122,138 +121,28 @@ function seedWorkoutProgram(db: Database.Database) {
      VALUES (@id, @template_id, @name, @sets_prescribed, @reps_prescribed, @order_idx, @notes)`
   );
 
-  function addTemplate(
-    weekDay: number,
-    dayName: string,
-    label: string,
-    muscleGroups: string,
-    goal: string,
-    cardio: string,
-    exercises: ExerciseDef[]
-  ) {
+  for (const day of OFFICIAL_WORKOUT_PROGRAM) {
     const tid = uuidv4();
-    insertTemplate.run({ id: tid, week_day: weekDay, day_name: dayName, label, muscle_groups: muscleGroups, goal, cardio, created_at: now });
-    exercises.forEach((e, i) => {
-      insertExercise.run({ id: uuidv4(), template_id: tid, name: e.name, sets_prescribed: e.sets, reps_prescribed: e.reps, order_idx: i, notes: e.notes ?? null });
+    insertTemplate.run({
+      id: tid,
+      week_day: day.weekDay,
+      day_name: day.dayName,
+      label: day.label,
+      muscle_groups: day.muscleGroups,
+      goal: day.goal,
+      cardio: day.cardio,
+      created_at: now,
+    });
+    day.exercises.forEach((e, i) => {
+      insertExercise.run({
+        id: uuidv4(),
+        template_id: tid,
+        name: e.name,
+        sets_prescribed: e.sets,
+        reps_prescribed: e.reps,
+        order_idx: i,
+        notes: e.notes ?? null,
+      });
     });
   }
-
-  // Monday — Pull A
-  addTemplate(1, "Pull A", "Monday — Pull A: Back Width + Biceps",
-    "Lats, Upper Back, Rear Delts, Biceps, Core",
-    "Wider lats & V-shape. Priority: pull-ups, lat pulldown, rear delts.",
-    "20–30 min incline treadmill walk after lifting",
-    [
-      { name: "Pull-ups / Assisted Pull-ups", sets: "4", reps: "6–10", notes: "V-taper priority — full ROM, dead hang" },
-      { name: "Lat Pulldown (wide grip)", sets: "4", reps: "8–12", notes: "Lean back slightly, drive elbows to hips" },
-      { name: "Chest-Supported Row", sets: "4", reps: "8–12", notes: "Eliminate momentum, squeeze at top" },
-      { name: "Single-Arm Cable Lat Pulldown", sets: "3", reps: "10–15 each side", notes: "Full stretch at top" },
-      { name: "Seated Cable Row", sets: "3", reps: "10–12", notes: "Elbows tucked, pull to navel" },
-      { name: "Rear Delt Fly", sets: "4", reps: "12–20", notes: "Light weight, feel the squeeze" },
-      { name: "Barbell / EZ-Bar Curl", sets: "3", reps: "8–12", notes: "Slow eccentric (3 sec down)" },
-      { name: "Hammer Curls", sets: "3", reps: "10–15", notes: "Neutral grip, keep elbows fixed" },
-      { name: "Hanging Knee Raises", sets: "3", reps: "10–15", notes: "Core/abs finisher" },
-    ]
-  );
-
-  // Tuesday — Push A
-  addTemplate(2, "Push A", "Tuesday — Push A: Chest + Shoulders + Triceps",
-    "Upper Chest, Front/Side Delts, Triceps, Core",
-    "Upper chest fullness, round shoulders, bigger arms.",
-    "20 min incline treadmill walk after lifting",
-    [
-      { name: "Incline Bench Press", sets: "4", reps: "6–10", notes: "Upper chest priority — 30–45° incline" },
-      { name: "Flat Dumbbell Bench Press", sets: "3", reps: "8–12", notes: "Full stretch at bottom" },
-      { name: "Machine Chest Press", sets: "3", reps: "8–12", notes: "Squeeze hard at lockout" },
-      { name: "Cable Fly (low-to-high)", sets: "3", reps: "12–15", notes: "Upper chest emphasis" },
-      { name: "Dumbbell Lateral Raises", sets: "5", reps: "12–20", notes: "V-taper key — slight forward lean, lead with elbow" },
-      { name: "Shoulder Press Machine / DB Press", sets: "3", reps: "8–12", notes: "Overhead strength" },
-      { name: "Triceps Rope Pushdown", sets: "4", reps: "10–15", notes: "Spread the rope at the bottom" },
-      { name: "Overhead Cable Triceps Extension", sets: "3", reps: "10–15", notes: "Long head stretch" },
-      { name: "Plank", sets: "3", reps: "45–60 sec", notes: "Stay tight — no sagging hips" },
-    ]
-  );
-
-  // Wednesday — Legs A
-  addTemplate(3, "Legs A", "Wednesday — Legs A: Quads + Glutes + Calves",
-    "Quads, Glutes, Hamstrings, Calves, Core",
-    "Athletic legs without destroying recovery. Keep intensity manageable.",
-    "10–15 min easy walk only — legs need recovery",
-    [
-      { name: "Back Squat", sets: "4", reps: "5–8", notes: "Priority strength movement — brace hard" },
-      { name: "Leg Press", sets: "4", reps: "10–15", notes: "Full ROM, don't lock out" },
-      { name: "Bulgarian Split Squat", sets: "3", reps: "8–12 each leg", notes: "Rear foot elevated — glute & quad" },
-      { name: "Leg Extension", sets: "3", reps: "12–15", notes: "Slow tempo — squeeze at top" },
-      { name: "Romanian Deadlift", sets: "3", reps: "8–10", notes: "Hinge, feel hamstring stretch" },
-      { name: "Seated / Lying Hamstring Curl", sets: "3", reps: "10–15", notes: "Slow eccentric" },
-      { name: "Standing Calf Raise", sets: "5", reps: "10–15", notes: "Full ROM — heel below platform" },
-      { name: "Cable Crunch", sets: "3", reps: "12–15", notes: "Core finisher — abs" },
-    ]
-  );
-
-  // Thursday — Pull B
-  addTemplate(4, "Pull B", "Thursday — Pull B: Back Thickness + Rear Delts",
-    "Upper Back Thickness, Lats, Rear Delts, Biceps",
-    "Thick upper back + lats. Heavier compound movements.",
-    "25–35 min incline treadmill walk after lifting",
-    [
-      { name: "Deadlift / Rack Pull", sets: "3", reps: "3–6", notes: "Heaviest lift of the week — full tension" },
-      { name: "Neutral-Grip Pull-ups / Pulldown", sets: "4", reps: "8–12", notes: "Neutral grip hits lats differently" },
-      { name: "Barbell Row / T-Bar Row", sets: "4", reps: "6–10", notes: "Thickness builder — pull to lower chest" },
-      { name: "Machine Row (elbows tucked)", sets: "3", reps: "10–12", notes: "Scapular retraction focus" },
-      { name: "Straight-Arm Pulldown", sets: "4", reps: "12–15", notes: "Lat isolation — arms straight throughout" },
-      { name: "Face Pulls", sets: "4", reps: "15–20", notes: "Rear delt + rotator cuff health" },
-      { name: "Incline Dumbbell Curls", sets: "3", reps: "10–12", notes: "Long head stretch — great for peak" },
-      { name: "Cable Curls", sets: "3", reps: "12–15", notes: "Constant tension" },
-      { name: "Reverse Curls", sets: "3", reps: "12–15", notes: "Brachialis + forearms" },
-    ]
-  );
-
-  // Friday — Push B
-  addTemplate(5, "Push B", "Friday — Push B: Shoulders Focus + Upper Chest",
-    "Side Delts, Rear Delts, Upper Chest, Triceps, Core",
-    "Maximum V-taper look. Shoulders are the priority today.",
-    "20–30 min incline treadmill walk after lifting",
-    [
-      { name: "Overhead Press / Shoulder Press Machine", sets: "4", reps: "6–10", notes: "Shoulder strength base" },
-      { name: "Incline Dumbbell Press", sets: "4", reps: "8–12", notes: "Upper chest — slightly different angle than Tues" },
-      { name: "Weighted / Assisted Dips", sets: "3", reps: "8–12", notes: "Lean forward slightly for chest emphasis" },
-      { name: "Pec Deck / Cable Fly", sets: "3", reps: "12–15", notes: "Squeeze hard — full stretch" },
-      { name: "Cable Lateral Raises", sets: "5", reps: "12–20 each side", notes: "V-taper key — unilateral cable is constant tension" },
-      { name: "Rear Delt Machine Fly", sets: "4", reps: "15–20", notes: "High reps — feel the squeeze" },
-      { name: "Close-Grip Bench / Machine Press", sets: "3", reps: "8–10", notes: "Triceps mass builder" },
-      { name: "Rope Pushdowns", sets: "3", reps: "12–15", notes: "Spread at bottom, squeeze" },
-      { name: "Ab Wheel / Dead Bug", sets: "3", reps: "8–12", notes: "Core strength + anti-extension" },
-    ]
-  );
-
-  // Saturday — Legs B + Conditioning
-  addTemplate(6, "Legs B", "Saturday — Legs B + Athletic Conditioning",
-    "Hamstrings, Glutes, Calves, Core, Cardio Conditioning",
-    "Hamstrings, glutes, calves, fat loss, rugby/cardio performance.",
-    "Choose: 30–45 min incline walk OR 10 rounds 20sec sprint/100sec walk OR 20 min Stairmaster",
-    [
-      { name: "Romanian Deadlift", sets: "4", reps: "6–10", notes: "Hamstring focus — feel the stretch" },
-      { name: "Front Squat / Goblet Squat", sets: "4", reps: "8–12", notes: "Quad emphasis, more upright torso" },
-      { name: "Walking Lunges", sets: "3", reps: "12 steps each leg", notes: "Glute & quad — add weight when ready" },
-      { name: "Hamstring Curl", sets: "4", reps: "10–15", notes: "Slow eccentric, feel the burn" },
-      { name: "Hip Thrust", sets: "3", reps: "8–12", notes: "Glute activation — squeeze at top" },
-      { name: "Seated Calf Raise", sets: "5", reps: "12–20", notes: "Soleus — slow reps" },
-      { name: "Tibialis Raises", sets: "3", reps: "15–20", notes: "Shin strength — injury prevention for running/rugby" },
-      { name: "Hanging Leg Raises", sets: "3", reps: "10–15", notes: "Lower abs finisher" },
-    ]
-  );
-
-  // Sunday — Rest
-  addTemplate(0, "Rest", "Sunday — Active Recovery",
-    "Full Body Mobility",
-    "8k–12k steps, stretch, no hard lifting.",
-    "8,000–12,000 steps walking only",
-    [
-      { name: "Hip flexor stretch", sets: "3", reps: "60 sec each side", notes: "Couch stretch works best" },
-      { name: "Hamstring stretch", sets: "3", reps: "60 sec each side", notes: "" },
-      { name: "Lat / chest stretch", sets: "3", reps: "45 sec", notes: "" },
-      { name: "Foam roll upper back", sets: "1", reps: "3–5 min", notes: "" },
-    ]
-  );
 }
