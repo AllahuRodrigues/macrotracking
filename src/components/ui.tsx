@@ -3,12 +3,14 @@ interface CardProps {
   className?: string;
   title?: string;
   action?: React.ReactNode;
+  style?: React.CSSProperties;
 }
 
-export function Card({ children, className = "", title, action }: CardProps) {
+export function Card({ children, className = "", title, action, style }: CardProps) {
   return (
     <div
       className={`rounded-xl border border-[var(--card-border)] bg-[var(--card)] p-4 ${className}`}
+      style={style}
     >
       {(title || action) && (
         <div className="mb-3 flex items-center justify-between">

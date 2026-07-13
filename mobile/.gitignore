@@ -1,0 +1,23 @@
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+/ios
+/android
+
+# Dependencies
+node_modules/
+
+# Metro
+.metro-health-check*
+
+# Env
+.env
+.env.local
+
+# Misc
+*.log
+.DS_Store

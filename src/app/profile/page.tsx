@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import {
   Pencil, Trash2, Plus, X, Check, Pill, Target, Activity,
-  Dumbbell, Droplets, Flame, Scale, User, Zap, Coffee, TrendingDown,
+  Dumbbell, Droplets, Flame, Scale, User, Zap, Coffee, TrendingDown, Download,
 } from "lucide-react";
 import type { Supplement, SupplementCategory, UserProfile } from "@/lib/types";
 import { getImageUrl } from "@/lib/storage";
@@ -223,6 +223,23 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
+      </Card>
+
+      {/* ── Export Data ── */}
+      <Card title="Export Data">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-[var(--muted)]">
+            Download everything — meals, body metrics, workouts, program, supplements
+            and photos — as a single JSON file. Also available in the iOS app.
+          </p>
+          <a
+            href="/api/export"
+            download
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+          >
+            <Download size={15} /> Export all data
+          </a>
+        </div>
       </Card>
 
       {/* ── Full InBody Report ── */}

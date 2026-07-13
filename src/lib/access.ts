@@ -3,6 +3,9 @@ export type AccessRole = "guest" | "rodrigues";
 export const ACCESS_COOKIE = "macro_access";
 export const RODRIGUES_CODE = "2003";
 
+/** Header the Expo/native client sends to authenticate write access. */
+export const ACCESS_CODE_HEADER = "x-macro-access-code";
+
 export function canWrite(role: AccessRole | null): boolean {
   return role === "rodrigues";
 }

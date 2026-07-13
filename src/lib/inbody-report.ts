@@ -38,7 +38,7 @@ export const INBODY_REPORT = {
     percentBodyFat: 19.9,
     percentBodyFatOfficial: 19.9,
     /** User-reported (separate method — scale/visual) */
-    percentBodyFatUserReported: 32,
+    percentBodyFatUserReported: 30,
     bodyFatMassLb: 37.3,
     visceralFatAreaCm2: 68.2,
     visceralFatLevel: 6,
@@ -105,14 +105,14 @@ export const INBODY_REPORT = {
     targetBodyFatPct: "14–16%",
     startWeightLb: 187.6,
     goalNote:
-      "Lose fat while preserving 86.9 lb muscle. Target: ~174 lb @ 14–16% BF by Aug 1. User-reported BF 32% — trunk fat is primary target.",
+      "Lose fat while preserving 86.9 lb muscle. Target: ~174 lb @ 14–16% BF by Aug 1. User-reported BF 30% — trunk fat is primary target.",
   },
 
   summary: {
     headline: "Score 90 — muscle up, fat down. Cut is working.",
     bullets: [
       "SMM +1.8 lb vs May 22 (85.1 → 86.9) — gaining muscle while cutting.",
-      "InBody BF 19.9% (37.3 lb). User-reported BF 32% from separate measurement.",
+      "InBody BF 19.9% (37.3 lb). User-reported BF 30% from separate measurement.",
       "Visceral fat dropped: 75.1 → 68.2 cm² (-8.1 cm²), level 7 → 6.",
       "Phase angle improved to 7.5° — cell quality trending up.",
       "Cut focus: trunk fat reduction. Preserve arm/leg muscle already above average.",
