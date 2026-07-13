@@ -13,6 +13,7 @@ import type {
   WorkoutSession,
   SessionExercise,
   WaterLog,
+  DailyCheckin,
 } from "./types";
 import { getSupabase } from "./supabase-client";
 import { deleteFromStorage } from "./storage";
@@ -535,6 +536,42 @@ export async function resetWaterForDate(date: string): Promise<void> {
   const supabase = getSupabase();
   const { error } = await supabase.from("water_logs").delete().eq("date", date);
   if (error) throw error;
+}
+
+// ── Daily check-ins ──
+
+export async function getDailyCheckin(date: string): Promise<DailyCheckin | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("daily_checkins")
+    .select("*")
+    .eq("date", date)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as DailyCheckin) ?? null;
+}
+
+export async function getDailyCheckins(days = 30): Promise<DailyCheckin[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("daily_checkins")
+    .select("*")
+    .order("date", { ascending: false })
+    .limit(days);
+  if (error) throw error;
+  return (data ?? []) as DailyCheckin[];
+}
+
+export async function upsertDailyCheckin(data: DailyCheckin): Promise<DailyCheckin> {
+  const supabase = getSupabase();
+  const row = {
+    ...data,
+    source: data.source ?? "manual",
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await supabase.from("daily_checkins").upsert(row, { onConflict: "date" });
+  if (error) throw error;
+  return (await getDailyCheckin(data.date))!;
 }
 
 // ── Supplements ──

@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import type {
   BodyMetric, FoodEntry, PhotoEntry, Supplement, SupplementIntake, UserProfile,
   WorkoutTemplate, TemplateExercise, WorkoutSession, SessionExercise, WaterLog,
+  DailyCheckin,
 } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -152,6 +153,26 @@ export function getDb(): Database.Database {
       date TEXT NOT NULL,
       amount_ml INTEGER NOT NULL,
       created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS daily_checkins (
+      date TEXT PRIMARY KEY,
+      sleep_hours REAL,
+      sleep_quality INTEGER,
+      steps INTEGER,
+      resting_hr INTEGER,
+      hrv INTEGER,
+      hunger INTEGER,
+      stress INTEGER,
+      bloating INTEGER,
+      soreness INTEGER,
+      motivation INTEGER,
+      session_rpe INTEGER,
+      caffeine_mg INTEGER,
+      alcohol INTEGER DEFAULT 0,
+      notes TEXT,
+      source TEXT DEFAULT 'manual',
+      updated_at TEXT NOT NULL
     );
 
     CREATE INDEX IF NOT EXISTS idx_food_date ON food_entries(date);
@@ -560,6 +581,65 @@ export function deleteWaterLog(id: string): boolean {
 
 export function resetWaterForDate(date: string): void {
   getDb().prepare("DELETE FROM water_logs WHERE date = ?").run(date);
+}
+
+// ── Daily check-ins ──
+
+export function getDailyCheckin(date: string): DailyCheckin | null {
+  return (getDb().prepare("SELECT * FROM daily_checkins WHERE date = ?").get(date) as DailyCheckin) ?? null;
+}
+
+export function getDailyCheckins(days = 30): DailyCheckin[] {
+  return getDb()
+    .prepare("SELECT * FROM daily_checkins ORDER BY date DESC LIMIT ?")
+    .all(days) as DailyCheckin[];
+}
+
+export function upsertDailyCheckin(data: DailyCheckin): DailyCheckin {
+  const db = getDb();
+  const row: DailyCheckin = {
+    ...data,
+    source: data.source ?? "manual",
+    updated_at: new Date().toISOString(),
+  };
+  db.prepare(
+    `INSERT INTO daily_checkins (
+      date, sleep_hours, sleep_quality, steps, resting_hr, hrv,
+      hunger, stress, bloating, soreness, motivation, session_rpe,
+      caffeine_mg, alcohol, notes, source, updated_at
+    ) VALUES (
+      @date, @sleep_hours, @sleep_quality, @steps, @resting_hr, @hrv,
+      @hunger, @stress, @bloating, @soreness, @motivation, @session_rpe,
+      @caffeine_mg, @alcohol, @notes, @source, @updated_at
+    )
+    ON CONFLICT(date) DO UPDATE SET
+      sleep_hours=excluded.sleep_hours, sleep_quality=excluded.sleep_quality,
+      steps=excluded.steps, resting_hr=excluded.resting_hr, hrv=excluded.hrv,
+      hunger=excluded.hunger, stress=excluded.stress, bloating=excluded.bloating,
+      soreness=excluded.soreness, motivation=excluded.motivation,
+      session_rpe=excluded.session_rpe, caffeine_mg=excluded.caffeine_mg,
+      alcohol=excluded.alcohol, notes=excluded.notes, source=excluded.source,
+      updated_at=excluded.updated_at`
+  ).run({
+    date: row.date,
+    sleep_hours: row.sleep_hours ?? null,
+    sleep_quality: row.sleep_quality ?? null,
+    steps: row.steps ?? null,
+    resting_hr: row.resting_hr ?? null,
+    hrv: row.hrv ?? null,
+    hunger: row.hunger ?? null,
+    stress: row.stress ?? null,
+    bloating: row.bloating ?? null,
+    soreness: row.soreness ?? null,
+    motivation: row.motivation ?? null,
+    session_rpe: row.session_rpe ?? null,
+    caffeine_mg: row.caffeine_mg ?? null,
+    alcohol: row.alcohol ?? 0,
+    notes: row.notes ?? null,
+    source: row.source ?? "manual",
+    updated_at: row.updated_at,
+  });
+  return getDailyCheckin(row.date)!;
 }
 
 // ── Supplements ──

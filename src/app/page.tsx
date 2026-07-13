@@ -13,7 +13,10 @@ import { SupplementDailyTracker } from "@/components/SupplementDailyTracker";
 import { useDayType } from "@/lib/useDayType";
 import { useAccess } from "@/context/AccessProvider";
 import { InsightsPanel } from "@/components/InsightsPanel";
+import { CheckinPanel, MealRiskPanel, WeeklyReportPanel } from "@/components/CheckinPanel";
+import { QuickLogPanel } from "@/components/QuickLogPanel";
 import type { InsightsPayload } from "@/lib/insights";
+import type { MealRisk, WeeklyReport } from "@/lib/meal-risk";
 
 export default function DashboardPage() {
   const [date, setDate] = useState(todayISO());
@@ -28,15 +31,18 @@ export default function DashboardPage() {
   });
   const [latestBody, setLatestBody] = useState<BodyMetric | null>(null);
   const [insights, setInsights] = useState<InsightsPayload | null>(null);
+  const [mealRisk, setMealRisk] = useState<MealRisk | null>(null);
+  const [weekly, setWeekly] = useState<WeeklyReport | null>(null);
   const { dayType, setDayType, goals } = useDayType();
   const { canWrite } = useAccess();
 
   const load = useCallback(async () => {
-    const [entriesRes, statsRes, bodyRes, insightsRes] = await Promise.all([
+    const [entriesRes, statsRes, bodyRes, insightsRes, reportRes] = await Promise.all([
       fetch(`/api/entries?date=${date}`),
       fetch(`/api/stats?date=${date}`),
       fetch("/api/body?limit=1"),
       fetch("/api/insights?days=60"),
+      fetch(`/api/report?date=${date}`),
     ]);
     setEntries(await entriesRes.json());
     const s = await statsRes.json();
@@ -57,6 +63,9 @@ export default function DashboardPage() {
     const body = await bodyRes.json();
     setLatestBody(body[0] ?? null);
     setInsights(await insightsRes.json());
+    const report = await reportRes.json();
+    setMealRisk(report.meal_risk ?? null);
+    setWeekly(report.weekly_report ?? null);
   }, [date]);
 
   useEffect(() => { load(); }, [load]);
@@ -81,6 +90,10 @@ export default function DashboardPage() {
       <DayTypeToggle dayType={dayType} setDayType={setDayType} />
 
       {insights && <InsightsPanel data={insights} />}
+      {mealRisk && <MealRiskPanel data={mealRisk} />}
+      {canWrite && <QuickLogPanel onSaved={load} />}
+      <CheckinPanel date={date} />
+      {weekly && <WeeklyReportPanel data={weekly} />}
 
       <Card className="!p-6">
         <div className="mb-4 text-center">

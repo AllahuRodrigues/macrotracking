@@ -4,9 +4,13 @@ import { useEffect, useState, useCallback } from "react";
 import type { BodyMetric } from "@/lib/types";
 import { BodyMetricForm, BodyMetricList } from "@/components/BodyMetricForm";
 import { InBodyReportCard } from "@/components/InBodyReportCard";
+import { QuickLogPanel } from "@/components/QuickLogPanel";
 import { Card } from "@/components/ui";
+import { GuestBanner } from "@/components/GuestBanner";
+import { useAccess } from "@/context/AccessProvider";
 
 export default function BodyPage() {
+  const { canWrite } = useAccess();
   const [metrics, setMetrics] = useState<BodyMetric[]>([]);
   const [editMetric, setEditMetric] = useState<BodyMetric | null>(null);
 
@@ -15,7 +19,9 @@ export default function BodyPage() {
     setMetrics(await res.json());
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const latest = metrics[0];
 
@@ -24,9 +30,13 @@ export default function BodyPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Body & InBody</h1>
         <p className="text-sm text-[var(--muted)]">
-          Track weight, muscle mass, body fat, and InBody scan readings.
+          Weigh-in, full InBody scan, or quick photo — keep everything in one place.
         </p>
       </div>
+
+      <GuestBanner />
+
+      {canWrite && <QuickLogPanel onSaved={load} />}
 
       {latest && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -45,7 +55,7 @@ export default function BodyPage() {
           )}
           {latest.muscle_mass_lbs != null && (
             <Card className="text-center">
-              <p className="text-xs text-[var(--muted)]">Muscle Mass</p>
+              <p className="text-xs text-[var(--muted)]">Muscle</p>
               <p className="text-2xl font-bold">{latest.muscle_mass_lbs}</p>
               <p className="text-xs text-[var(--muted)]">lbs</p>
             </Card>
@@ -61,20 +71,26 @@ export default function BodyPage() {
 
       <InBodyReportCard />
 
-      <BodyMetricForm
-        onSaved={load}
-        editMetric={editMetric}
-        onCancelEdit={() => setEditMetric(null)}
-      />
+      {canWrite && (
+        <BodyMetricForm
+          onSaved={load}
+          editMetric={editMetric}
+          onCancelEdit={() => setEditMetric(null)}
+        />
+      )}
 
       <Card title="History">
         <BodyMetricList
           metrics={metrics}
-          onEdit={setEditMetric}
-          onDelete={async (id) => {
-            await fetch(`/api/body/${id}`, { method: "DELETE" });
-            load();
-          }}
+          onEdit={canWrite ? setEditMetric : undefined}
+          onDelete={
+            canWrite
+              ? async (id) => {
+                  await fetch(`/api/body/${id}`, { method: "DELETE" });
+                  load();
+                }
+              : undefined
+          }
         />
       </Card>
     </div>

@@ -13,6 +13,8 @@ import type {
   WorkoutSession,
   SessionExercise,
   UserProfile,
+  DailyCheckin,
+  SessionSet,
 } from "@shared/types";
 
 async function authHeaders(extra: Record<string, string> = {}) {
@@ -170,8 +172,74 @@ export const api = {
       `/api/templates?day=${day}`
     ),
 
+  startSession: (data: {
+    date: string;
+    template_id?: string;
+    name: string;
+    notes?: string;
+  }) =>
+    jsonReq<WorkoutSession>("/api/workouts", "POST", { type: "session", data }),
+
+  upsertSessionExercise: (data: Partial<SessionExercise> & { session_id: string; name: string }) =>
+    jsonReq<SessionExercise>("/api/workouts", "POST", { type: "exercise", data }),
+
+  logSet: async (
+    exercise: SessionExercise,
+    weight: number,
+    reps: number
+  ): Promise<SessionExercise> => {
+    const sets: SessionSet[] = JSON.parse(exercise.sets_data || "[]");
+    sets.push({ set_num: sets.length + 1, weight_lbs: weight, reps, done: true });
+    return req<SessionExercise>(`/api/workouts/${exercise.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "exercise",
+        data: { sets_data: JSON.stringify(sets) },
+      }),
+    });
+  },
+
+  markCardio: (sessionId: string, done: boolean, min = 30) =>
+    req(`/api/workouts/${sessionId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cardio_done: done ? 1 : 0, cardio_min: done ? min : 0 }),
+    }),
+
   // Profile
   getProfile: () => req<UserProfile | null>("/api/profile"),
+
+  getCheckin: (date: string) =>
+    req<DailyCheckin>(`/api/checkin?date=${date}`),
+  saveCheckin: (data: DailyCheckin) =>
+    jsonReq<DailyCheckin>("/api/checkin", "POST", data),
+
+  getReport: (date?: string) =>
+    req<{
+      meal_risk: {
+        level: "low" | "medium" | "high";
+        remaining_kcal: number;
+        probability_pct: number;
+        headline: string;
+        body: string;
+        suggestions: string[];
+      };
+      weekly_report: {
+        week_label: string;
+        avg_calories: number;
+        avg_protein: number;
+        calorie_hit_rate: number;
+        protein_hit_rate: number;
+        biggest_problem: string;
+        wins: string[];
+        next_week_focus: string[];
+        estimated_weight_change_lbs: number | null;
+      };
+      coaching: InsightsPayload["coaching"];
+      execution: InsightsPayload["execution"];
+      weight: InsightsPayload["weight"];
+    }>(`/api/report${date ? `?date=${date}` : ""}`),
 
   // AI food analysis
   analyzeFood: (image: string, hint?: string) =>

@@ -5,16 +5,20 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { todayISO, weekdayIndexISO } from "@shared/timezone";
 import { WORKOUT_DAY_GOALS, REST_DAY_GOALS, WATER_GOAL_ML } from "@shared/types";
 import { useDaySummary, useWater, useAddWater, useTodaySession, useInsights } from "@/api/queries";
 import { DateNav } from "@/components/DateNav";
 import { MacroRing, MacroBar } from "@/components/MacroRing";
 import { InsightsHero } from "@/components/InsightsCard";
+import { CheckinCard } from "@/components/CheckinCard";
+import { MealRiskCard, WeeklyReportCard } from "@/components/MealRiskCard";
+import { QuickLogBar } from "@/components/QuickLog";
 import { Card, AppText, Pill, Row } from "@/components/ui";
 import { AnimatedCounter, PressableScale } from "@/components/anim";
 import { theme } from "@/lib/theme";
+import { api } from "@/api/client";
 
 type DayType = "workout" | "rest";
 
@@ -36,6 +40,10 @@ export default function Dashboard() {
   const water = useWater(date);
   const session = useTodaySession(date);
   const insights = useInsights(60);
+  const report = useQuery({
+    queryKey: ["report", date],
+    queryFn: () => api.getReport(date),
+  });
   const addWater = useAddWater(date);
   const qc = useQueryClient();
 
@@ -82,6 +90,20 @@ export default function Dashboard() {
               <InsightsHero data={insights.data} />
             </Animated.View>
           ) : null}
+
+          {report.data?.meal_risk ? (
+            <Animated.View entering={FadeInDown.delay(30).springify()} style={{ marginBottom: 14 }}>
+              <MealRiskCard data={report.data.meal_risk} />
+            </Animated.View>
+          ) : null}
+
+          <Animated.View entering={FadeInDown.delay(35).springify()} style={{ marginBottom: 14 }}>
+            <QuickLogBar date={date} />
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(40).springify()} style={{ marginBottom: 14 }}>
+            <CheckinCard date={date} compact />
+          </Animated.View>
 
           {/* AI scan quick action */}
           <Animated.View entering={FadeInDown.delay(40).springify()}>
@@ -197,12 +219,18 @@ export default function Dashboard() {
                 {session.data?.session?.name ?? "Today's Workout"}
               </AppText>
               {session.data?.exercises?.length ? (
-                <AppText muted size={13}>{session.data.exercises.length} exercises logged</AppText>
+                <AppText muted size={13}>{session.data.exercises.length} exercises · tap Train to log sets</AppText>
               ) : (
-                <AppText muted size={13}>Open the Workout tab to start today's session.</AppText>
+                <AppText muted size={13}>Open Train → Start session to log weight × reps.</AppText>
               )}
             </Card>
           </Animated.View>
+
+          {report.data?.weekly_report ? (
+            <Animated.View entering={FadeInDown.delay(360).springify()} style={{ marginTop: 14 }}>
+              <WeeklyReportCard data={report.data.weekly_report} />
+            </Animated.View>
+          ) : null}
         </View>
       </ScrollView>
     </View>

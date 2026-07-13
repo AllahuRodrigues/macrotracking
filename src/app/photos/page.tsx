@@ -40,6 +40,8 @@ export default function PhotosPage() {
 
       <GuestBanner />
 
+      {canWrite && <QuickLogPanel onSaved={load} />}
+
       <BodyProgressTracker photos={photos} bodyMetrics={bodyMetrics} />
 
       {canWrite && <PhotoUpload onUploaded={load} defaultCategory="body" />}

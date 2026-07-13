@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
 import { SegmentBar } from "@/components/SegmentBar";
 import { InsightsHero, InsightsDetail } from "@/components/InsightsCard";
+import { QuickLogBar } from "@/components/QuickLog";
 import { AppText, ScreenTitle } from "@/components/ui";
 import { theme } from "@/lib/theme";
 import { api } from "@/api/client";
@@ -73,6 +74,7 @@ export default function ProgressHub() {
         }
       >
         <ScreenTitle title="Progress" subtitle="What happened · why · what next" />
+        <QuickLogBar />
         <SegmentBar options={SEGMENTS} value={seg} onChange={setSeg} />
         {insights.isLoading && <AppText muted>Loading insights…</AppText>}
         {insights.data && (

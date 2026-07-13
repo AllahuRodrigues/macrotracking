@@ -103,6 +103,16 @@ export async function resetWaterForDate(date: string) {
   return remote() ? supabase.resetWaterForDate(date) : sqlite.resetWaterForDate(date);
 }
 
+export async function getDailyCheckin(date: string) {
+  return remote() ? supabase.getDailyCheckin(date) : sqlite.getDailyCheckin(date);
+}
+export async function getDailyCheckins(days = 30) {
+  return remote() ? supabase.getDailyCheckins(days) : sqlite.getDailyCheckins(days);
+}
+export async function upsertDailyCheckin(data: Parameters<typeof sqlite.upsertDailyCheckin>[0]) {
+  return remote() ? supabase.upsertDailyCheckin(data) : sqlite.upsertDailyCheckin(data);
+}
+
 export async function getSupplements(activeOnly = false) {
   return remote() ? supabase.getSupplements(activeOnly) : sqlite.getSupplements(activeOnly);
 }

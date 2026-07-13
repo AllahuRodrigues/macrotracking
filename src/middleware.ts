@@ -11,6 +11,7 @@ const PROTECTED_PREFIXES = [
   "/api/supplement-intake",
   "/api/profile",
   "/api/water",
+  "/api/checkin",
   "/api/workouts",
   "/api/analyze-food",
 ];

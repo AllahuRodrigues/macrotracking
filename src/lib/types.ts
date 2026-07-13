@@ -218,6 +218,27 @@ export interface WaterLog {
 
 export const WATER_GOAL_ML = 4000;
 
+/** Daily lifestyle / recovery check-in */
+export interface DailyCheckin {
+  date: string;
+  sleep_hours?: number | null;
+  sleep_quality?: number | null; // 1–5
+  steps?: number | null;
+  resting_hr?: number | null;
+  hrv?: number | null;
+  hunger?: number | null; // 1–10
+  stress?: number | null;
+  bloating?: number | null;
+  soreness?: number | null;
+  motivation?: number | null;
+  session_rpe?: number | null; // 1–10
+  caffeine_mg?: number | null;
+  alcohol?: number | null; // 0|1
+  notes?: string | null;
+  source?: string | null; // manual | healthkit
+  updated_at?: string;
+}
+
 export interface BodyMetricExtended extends BodyMetric {
   segmental?: InBodySegment;
   phase_angle?: number;
