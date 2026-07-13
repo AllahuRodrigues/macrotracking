@@ -105,7 +105,7 @@ export const INBODY_REPORT = {
     targetBodyFatPct: "14–16%",
     startWeightLb: 187.6,
     goalNote:
-      "Lose fat while preserving 86.9 lb muscle. Target: ~174 lb @ 14–16% BF by Aug 1. User-reported BF 30% — trunk fat is primary target.",
+      "Lose fat while preserving 86.9 lb muscle. Target: ~174 lb @ 14–16% BF by Aug 14. User-reported BF 30% — trunk fat is primary target.",
   },
 
   summary: {

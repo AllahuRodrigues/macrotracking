@@ -96,9 +96,11 @@ function QuickBtn({
         borderColor: `${color}44`,
         borderWidth: 1,
         borderRadius: theme.radius.md,
-        paddingVertical: 14,
+        paddingVertical: 16,
+        minHeight: 72,
         alignItems: "center",
-        gap: 4,
+        justifyContent: "center",
+        gap: 6,
       }}
     >
       <Ionicons name={icon} size={22} color={color} />

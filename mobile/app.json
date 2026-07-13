@@ -43,10 +43,12 @@
           "cameraPermission": "MacroTrack needs your camera to take progress pictures."
         }
       ],
+      "./plugins/withLocalNotificationsOnly.js",
       [
         "expo-notifications",
         {
-          "color": "#4ade80"
+          "color": "#4ade80",
+          "enableBackgroundRemoteNotifications": false
         }
       ]
     ],

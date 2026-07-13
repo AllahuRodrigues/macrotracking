@@ -76,7 +76,7 @@ function seedProfile(db: Database.Database) {
     goal: "Cut — 187 lb → 174–176 lb @ 14–16% BF (8–10 weeks · 1.5 lb/week)",
     avatar_filename: "profile-avatar.png",
     target_calories: 2200, target_protein: 200, target_fat: 55, target_carbs: 220,
-    notes: "Cut to 174 lb by Aug 1. Training days: 2200 kcal / 200P / 220C / 55F. Rest days: 1950 kcal / 200P / 140C / 60F. Pull-Push-Lower split Mon–Sat. Fitness SF.",
+    notes: "Cut to 174 lb by Aug 14 (Jul 13–31 + Aug 3–14, reset Aug 1–2). Training days: 2200 kcal / 200P / 220C / 55F. Rest days: 1950 kcal / 200P / 140C / 60F. Push-Pull-Legs Mon–Sat. Fitness SF.",
     updated_at: new Date().toISOString(),
   });
 }

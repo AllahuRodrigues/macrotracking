@@ -175,7 +175,7 @@ export function BodyProgressTracker({ photos, bodyMetrics }: BodyProgressTracker
           {weightToGoal > 0 && (
             <p className="mt-3 flex items-center gap-1.5 text-xs text-[var(--muted)]">
               <TrendingDown size={13} className="text-[var(--accent)]" />
-              ~{weightToGoal.toFixed(0)} lb to goal by Aug 1 · stay consistent with photos + macros
+              ~{weightToGoal.toFixed(0)} lb to goal by Aug 14 · stay consistent with photos + macros
             </p>
           )}
         </div>

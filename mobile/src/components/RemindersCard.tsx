@@ -109,7 +109,7 @@ export function RemindersCard() {
         </AppText>
       </Row>
       <AppText muted size={12} style={{ marginBottom: 12 }}>
-        Pop-up alerts on this iPhone — workout, shakes, water, logging.{" "}
+        Pop-up alerts — workout, shakes, water, rituals (no Zyns / glow), logging.{" "}
         {count > 0 ? `${count} scheduled.` : ""}
       </AppText>
 
@@ -153,6 +153,11 @@ export function RemindersCard() {
           )}
           <ToggleRow label="Steps check (7 PM)" value={prefs.steps} onChange={toggle("steps")} />
           <ToggleRow label="Sauna Wed & Sun" value={prefs.sauna} onChange={toggle("sauna")} />
+          <ToggleRow
+            label="Rituals & glow (AM/mid/PM)"
+            value={prefs.rituals}
+            onChange={toggle("rituals")}
+          />
         </>
       )}
     </Card>

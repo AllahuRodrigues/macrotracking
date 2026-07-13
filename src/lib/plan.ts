@@ -1,34 +1,101 @@
 /**
- * Evidence-based 21-day maximum-definition plan.
- * Pure data + light helpers, safe to import from both web and Expo mobile.
+ * Definition cut plan — two blocks with a short reset.
+ * Block 1: Jul 13–31 · Reset: Aug 1–2 · Block 2: Aug 3–14
+ * Split: Push (chest / shoulders / tris) → Pull (back / bis / forearms / core) → Legs (+ core)
  */
 
-export const PLAN_TITLE = "21-Day Maximum-Definition Plan";
+export const PLAN_TITLE = "Definition Block — Jul 13 → Aug 14";
 export const PLAN_SUBTITLE =
-  "Preserve muscle, tighten calories, kill bloat swings, reveal the frame you already have.";
+  "Push · Pull · Legs. Preserve 86.9 lb muscle, drop trunk fat, land ~174 lb @ 14–16% BF.";
+
 export const PLAN_START_ISO = "2026-07-13";
-export const PLAN_DAYS = 21;
+export const PLAN_END_ISO = "2026-08-14";
+export const PLAN_GOAL_WEIGHT_LBS = 174;
+export const PLAN_GOAL_BF = "14–16%";
+
+export type PlanPhase = {
+  id: string;
+  label: string;
+  start: string;
+  end: string;
+  rest?: boolean;
+};
+
+/** Active cut windows + 2-day reset between blocks. */
+export const PLAN_PHASES: PlanPhase[] = [
+  { id: "block1", label: "Block 1", start: "2026-07-13", end: "2026-07-31" },
+  { id: "reset", label: "Reset", start: "2026-08-01", end: "2026-08-02", rest: true },
+  { id: "block2", label: "Block 2", start: "2026-08-03", end: "2026-08-14" },
+];
+
+/** Calendar days from first start through final end (inclusive of reset). */
+export const PLAN_CALENDAR_DAYS = 33; // Jul 13 → Aug 14
+
+function isoToDate(iso: string): Date {
+  return new Date(iso + "T00:00:00");
+}
+
+function daysBetween(a: string, b: string): number {
+  return Math.floor((isoToDate(b).getTime() - isoToDate(a).getTime()) / 86_400_000);
+}
+
+export function planPhaseFor(iso: string): PlanPhase | null {
+  for (const p of PLAN_PHASES) {
+    if (iso >= p.start && iso <= p.end) return p;
+  }
+  return null;
+}
+
+/** Day index within an active block (1-based), or 0 if outside / on reset. */
+export function planDayNumber(iso: string): number {
+  const phase = planPhaseFor(iso);
+  if (!phase || phase.rest) return 0;
+  return daysBetween(phase.start, iso) + 1;
+}
+
+/** Total active training days across both blocks up to `iso` (includes today if in block). */
+export function planActiveDayCount(iso: string): number {
+  let count = 0;
+  for (const p of PLAN_PHASES) {
+    if (p.rest) continue;
+    if (iso < p.start) break;
+    const end = iso < p.end ? iso : p.end;
+    count += daysBetween(p.start, end) + 1;
+  }
+  return count;
+}
+
+export const PLAN_ACTIVE_DAYS_TOTAL = PLAN_PHASES.filter((p) => !p.rest).reduce(
+  (n, p) => n + daysBetween(p.start, p.end) + 1,
+  0
+);
+
+/** @deprecated use PLAN_ACTIVE_DAYS_TOTAL — kept for older imports */
+export const PLAN_DAYS = PLAN_ACTIVE_DAYS_TOTAL;
 
 export const PLAN_BOTTOM_LINE =
-  "Keep calories controlled, protein high but not absurd, carbs strategic around training, steps very high, lifting hard, sprints as seasoning not the main meal, creatine and maybe caffeine, citrulline optional — and remove every binge food and alcohol day until the block is over.";
+  "Push chest/shoulders/tris, Pull back/bis/forearms/core, Legs all lower + core. High protein, steps 12–15k, sleep 7.5–9h — no cheat days until Aug 14.";
 
 /** Hard rules that apply every single day of the block. */
 export const PLAN_RULES: string[] = [
   "12,000–15,000 steps daily, including Sunday.",
   "7.5–9 hours of sleep, consistent bedtime.",
   "No alcohol, soda, pastries, fried-food blowouts, or cheat days.",
+  "No Zyns / nicotine — gums, vessels, sleep, and the cut all win when you quit.",
   "3–4 L of fluids daily, more when sweating heavily.",
   "Keep salt and water consistent — don't manipulate them for the mirror.",
   "Compounds finish ~1–2 reps in reserve; last isolation set may hit 0–1 RIR.",
   "Rest 2–3 min on compounds, 60–90 s on isolation.",
   "Keep lifting under ~90 min before cardio.",
+  "Daily rituals: push-ups, face/SPF, floss, smell clean — see Rituals tab.",
   "You can't spot-reduce face, belly, or chest fat — the deficit does that.",
 ];
 
 /** Extra protocols the user runs on top of the plan. */
 export const PLAN_EXTRAS = {
   trainingHoursPerDay: "3–4 h training/day (lift + cardio + steps)",
-  sauna: "2 × 30 min sauna per week (recovery, not fat loss)",
+  sauna: "2 × 30 min sauna per week (Wed & Sun preferred)",
+  split: "Push (chest · shoulders · triceps) → Pull (back · biceps · forearms · core) → Legs (quads · hams · glutes · calves · core)",
   asthmaNote:
     "Asthma: 10–12 min progressive warm-up before sprints/cardio. Only do high-intensity work when controlled; use your prescribed inhaler. Stop on unusual wheeze, chest tightness, or dizziness.",
 };
@@ -44,151 +111,201 @@ export type PlanDay = {
   coachNote?: string;
 };
 
+/** Classic PPL — Push starts the week (user preference). */
 export const PLAN_WEEK: PlanDay[] = [
   {
     weekDay: 1,
-    title: "Monday — Back width, rear delts, biceps",
-    focus: "Lats, rear delts, biceps, core",
-    warmup: "7–10 min: shoulder circles, band pull-aparts, 2 ramp-up sets",
+    title: "Monday — Push A (chest, shoulders, triceps)",
+    focus: "Chest · shoulders · triceps · light core",
+    warmup: "7–10 min: arm circles, band pull-aparts, 2 ramp-up sets",
     blocks: [
       {
-        exercises: [
-          { name: "Pull-ups or assisted pull-ups", scheme: "4 × 6–10" },
-          { name: "Chest-supported row", scheme: "3 × 8–12" },
-          { name: "Neutral-grip lat pulldown", scheme: "3 × 8–12" },
-          { name: "Single-arm cable lat row", scheme: "2 × 10–15 each" },
-          { name: "Reverse pec deck", scheme: "3 × 15–20" },
-          { name: "Incline dumbbell curl", scheme: "3 × 8–12" },
-          { name: "Hammer curl", scheme: "2 × 10–15" },
-          { name: "Cable crunch", scheme: "3 × 12–15" },
-        ],
-      },
-    ],
-    cardio: "25–30 min incline walk / Zone 2 cycling",
-    coachNote:
-      "Lats + upper back shrink the waist visually faster than chasing chest volume.",
-  },
-  {
-    weekDay: 2,
-    title: "Tuesday — Upper chest, shoulders, triceps",
-    focus: "Upper chest, delts, triceps, core",
-    blocks: [
-      {
+        heading: "Chest",
         exercises: [
           { name: "Incline Smith / DB press", scheme: "4 × 6–10" },
           { name: "Flat machine chest press", scheme: "3 × 8–12" },
+          { name: "Cable fly (low-to-high)", scheme: "3 × 12–15" },
+          { name: "Pec deck / machine fly", scheme: "3 × 12–15" },
+        ],
+      },
+      {
+        heading: "Shoulders",
+        exercises: [
           { name: "Seated shoulder press", scheme: "3 × 6–10" },
-          { name: "Low-to-high cable fly", scheme: "2 × 12–15" },
           { name: "Cable lateral raise", scheme: "4 × 12–20" },
+        ],
+      },
+      {
+        heading: "Triceps",
+        exercises: [
           { name: "Rope triceps pushdown", scheme: "3 × 10–15" },
           { name: "Overhead cable triceps ext.", scheme: "2 × 10–15" },
-          { name: "Ab wheel", scheme: "3 × 8–12" },
         ],
+      },
+      {
+        heading: "Core",
+        exercises: [{ name: "Ab wheel", scheme: "3 × 8–12" }],
       },
     ],
     cardio: "20–25 min Zone 2",
-    coachNote:
-      "Most important aesthetic day for chest shape + shoulder-to-waist ratio. Don't pile on 5 extra chest moves.",
+    coachNote: "Chest → shoulders → tris. Don't skip laterals — shoulder width sells the cut.",
+  },
+  {
+    weekDay: 2,
+    title: "Tuesday — Pull A (back, biceps, forearms, core)",
+    focus: "Lats · upper back · rear delts · biceps · forearms · core",
+    warmup: "7–10 min: shoulder circles, band pull-aparts, 2 ramp-up sets",
+    blocks: [
+      {
+        heading: "Back",
+        exercises: [
+          { name: "Pull-ups or assisted pull-ups", scheme: "4 × 6–10" },
+          { name: "Diverging lat pulldown", scheme: "4 × 8–12" },
+          { name: "Lat pulldown (standard / wide)", scheme: "3 × 8–12" },
+          { name: "Chest-supported row", scheme: "3 × 8–12" },
+          { name: "Rear delt machine", scheme: "4 × 15–20" },
+        ],
+      },
+      {
+        heading: "Biceps & forearms",
+        exercises: [
+          { name: "Incline dumbbell curl", scheme: "3 × 8–12" },
+          { name: "Hammer curl", scheme: "2 × 10–15" },
+          { name: "Reverse curl / wrist curl", scheme: "2 × 12–15" },
+        ],
+      },
+      {
+        heading: "Core",
+        exercises: [{ name: "Cable crunch", scheme: "3 × 12–15" }],
+      },
+    ],
+    cardio: "25–30 min incline walk / Zone 2",
+    coachNote: "Back width + thick arms. Forearms last — grip still fresh for rows.",
   },
   {
     weekDay: 3,
-    title: "Wednesday — Lower strength + acceleration",
-    focus: "Quads, hams, glutes, calves, speed",
+    title: "Wednesday — Legs A (all legs + core)",
+    focus: "Quads · hams · glutes · calves · core · optional speed",
     warmup: "Progressive 10–12 min (asthma-safe) before speed work",
     blocks: [
       {
-        heading: "Athletic prep (fresh, before lifting)",
+        heading: "Athletic prep (optional if fresh)",
         exercises: [
           { name: "Pogo jumps", scheme: "2 × 20" },
-          { name: "A-skips", scheme: "2 × 20 m" },
-          { name: "Broad jumps", scheme: "3 × 3" },
-          { name: "Accelerations", scheme: "6 × 8–10 s", note: "90–150 s full recovery — fast & clean, not conditioning" },
+          { name: "Accelerations", scheme: "6 × 8–10 s", note: "90–150 s recovery — quality only" },
         ],
       },
       {
-        heading: "Strength",
+        heading: "Legs",
         exercises: [
           { name: "Back squat", scheme: "4 × 5–8" },
+          { name: "Walking lunges", scheme: "4 × 12–16 steps each" },
           { name: "Romanian deadlift", scheme: "3 × 6–10" },
-          { name: "Leg press", scheme: "3 × 10–15" },
-          { name: "Seated / lying leg curl", scheme: "3 × 10–15" },
-          { name: "Bulgarian split squat", scheme: "2 × 8–12 each" },
+          { name: "Bulgarian split squat", scheme: "3 × 8–12 each" },
+          { name: "Leg curl", scheme: "3 × 10–15" },
           { name: "Standing calf raise", scheme: "4 × 10–15" },
-          { name: "Tibialis raise", scheme: "2 × 15–25" },
         ],
       },
+      {
+        heading: "Core",
+        exercises: [{ name: "Cable crunch / hanging raise", scheme: "3 × 12–15" }],
+      },
     ],
-    cardio: "No hard cardio — hit daily steps with easy walking",
+    cardio: "Easy walking only — hit steps",
+    coachNote: "Squat + lunges are the money. Sauna OK tonight (1 of 2).",
   },
   {
     weekDay: 4,
-    title: "Thursday — Back thickness, traps, forearms",
-    focus: "Back thickness, traps, forearms, posture",
+    title: "Thursday — Push B (chest, shoulders, triceps)",
+    focus: "Chest · shoulders · triceps · core",
     blocks: [
       {
+        heading: "Chest",
+        exercises: [
+          { name: "Flat bench press", scheme: "3 × 5–8" },
+          { name: "Incline machine press", scheme: "3 × 8–12" },
+          { name: "Cable fly / pec deck", scheme: "3 × 12–15" },
+          { name: "Cable chest press", scheme: "2 × 10–15" },
+        ],
+      },
+      {
+        heading: "Shoulders",
+        exercises: [
+          { name: "Machine shoulder press", scheme: "2 × 8–12" },
+          { name: "DB / machine lateral raise", scheme: "4 × 15–25" },
+          { name: "Rear delt machine", scheme: "3 × 15–20" },
+        ],
+      },
+      {
+        heading: "Triceps",
+        exercises: [
+          { name: "Triceps pushdown", scheme: "3 × 10–15" },
+          { name: "Overhead triceps ext.", scheme: "2 × 12–15" },
+        ],
+      },
+      {
+        heading: "Core",
+        exercises: [{ name: "Hanging leg raise", scheme: "3 × 10–15" }],
+      },
+    ],
+    cardio: "25–30 min Zone 2",
+  },
+  {
+    weekDay: 5,
+    title: "Friday — Pull B (back, biceps, forearms, core)",
+    focus: "Thickness · traps · biceps · forearms · core",
+    blocks: [
+      {
+        heading: "Back",
         exercises: [
           { name: "T-bar / supported machine row", scheme: "4 × 6–10" },
-          { name: "Close neutral-grip pulldown", scheme: "3 × 8–12" },
+          { name: "Diverging lat pulldown", scheme: "3 × 8–12" },
           { name: "Seated cable row", scheme: "3 × 10–12" },
-          { name: "Machine pullover / straight-arm pulldown", scheme: "2 × 12–15" },
-          { name: "Face pull / cable Y-raise", scheme: "3 × 15–20" },
-          { name: "DB / machine shrug", scheme: "3 × 10–15" },
-          { name: "Preacher curl", scheme: "3 × 8–12" },
-          { name: "Reverse curl", scheme: "2 × 12–15" },
-          { name: "Stomach vacuum", scheme: "4 × 20–30 s" },
+          { name: "Straight-arm pulldown", scheme: "2 × 12–15" },
+          { name: "Face pull / rear delt", scheme: "3 × 15–20" },
         ],
+      },
+      {
+        heading: "Biceps & forearms",
+        exercises: [
+          { name: "Preacher curl", scheme: "3 × 8–12" },
+          { name: "Hammer / reverse curl", scheme: "2 × 12–15" },
+          { name: "Farmer carry or wrist work", scheme: "2 × 30–40 s" },
+        ],
+      },
+      {
+        heading: "Core",
+        exercises: [{ name: "Stomach vacuum", scheme: "4 × 20–30 s" }],
       },
     ],
     cardio: "30–35 min Zone 2",
   },
   {
-    weekDay: 5,
-    title: "Friday — Chest, delts, triceps, abs",
-    focus: "Chest, delts, triceps, abs",
-    blocks: [
-      {
-        exercises: [
-          { name: "Flat bench press", scheme: "3 × 5–8" },
-          { name: "Incline machine press", scheme: "3 × 8–12" },
-          { name: "Cable fly / pec deck", scheme: "2 × 12–15" },
-          { name: "Machine shoulder press", scheme: "2 × 8–12" },
-          { name: "DB / machine lateral raise", scheme: "4 × 15–25" },
-          { name: "Rear-delt fly", scheme: "2 × 15–20" },
-          { name: "Triceps pushdown", scheme: "3 × 10–15" },
-          { name: "Overhead triceps ext.", scheme: "2 × 12–15" },
-          { name: "Hanging leg raise", scheme: "3 × 10–15" },
-        ],
-      },
-    ],
-    cardio: "25–30 min Zone 2",
-    coachNote: "Lateral raises controlled, lead with elbows — no heavy swinging.",
-  },
-  {
     weekDay: 6,
-    title: "Saturday — Athletic lower + agility",
-    focus: "Power, agility, conditioning",
+    title: "Saturday — Legs B (all legs + core)",
+    focus: "Power · quads · hams · glutes · calves · core",
     blocks: [
       {
-        heading: "Plyo & agility (quality, not exhaustion)",
+        heading: "Optional plyo",
         exercises: [
           { name: "Box jumps", scheme: "3 × 3" },
-          { name: "Lateral bounds", scheme: "3 × 4 each" },
           { name: "5-10-5 shuttle", scheme: "4 reps, full recovery" },
-          { name: "L-drill / 3-cone", scheme: "3 reps, full recovery" },
         ],
       },
       {
-        heading: "Strength",
+        heading: "Legs",
         exercises: [
           { name: "Trap-bar deadlift", scheme: "3 × 4–6" },
           { name: "Front / hack squat", scheme: "3 × 6–10" },
+          { name: "Walking lunges", scheme: "4 × 12–16 steps each" },
           { name: "Hip thrust", scheme: "3 × 8–12" },
-          { name: "Leg extension", scheme: "2 × 12–15" },
           { name: "Hamstring curl", scheme: "3 × 10–15" },
-          { name: "Walking lunge", scheme: "2 × 12 steps each" },
           { name: "Seated calf raise", scheme: "3 × 12–20" },
-          { name: "Pallof press", scheme: "3 × 10–15 each" },
         ],
+      },
+      {
+        heading: "Core",
+        exercises: [{ name: "Pallof press", scheme: "3 × 10–15 each" }],
       },
     ],
     cardio: "Optional 10 min easy cooldown",
@@ -196,48 +313,45 @@ export const PLAN_WEEK: PlanDay[] = [
   {
     weekDay: 0,
     title: "Sunday — Cardio, recovery, mobility",
-    focus: "Recover — still counts as training",
+    focus: "Recover — still counts",
     blocks: [
       {
         exercises: [
           { name: "Zone 2 walk / bike / elliptical", scheme: "50–70 min" },
           { name: "Hip-flexor stretch", scheme: "2 × 45 s each" },
           { name: "Hamstring stretch", scheme: "2 × 45 s each" },
-          { name: "Calf stretch", scheme: "2 × 45 s each" },
-          { name: "Thoracic rotations", scheme: "2 × 10 each" },
           { name: "Dead bug", scheme: "3 × 8 each" },
           { name: "Front plank", scheme: "3 × 30–45 s" },
         ],
       },
     ],
-    coachNote: "Sauna fits here or after Thursday — 2 × 30 min/week for recovery.",
+    coachNote: "Second sauna day if you missed Wed. 12–15k steps still.",
   },
 ];
 
 export const PLAN_PROGRESSION = [
   {
-    week: "Week 1 — Establish",
+    week: "Block 1 · Establish (Jul 13–19)",
     points: [
-      "Conservative weights, ~2 reps in reserve on almost every set.",
-      "Record every working weight and rep.",
-      "No added exercises, drop sets, or training through joint pain.",
+      "Conservative weights, ~2 RIR on almost every set.",
+      "Log every working weight and rep.",
+      "Lock Push → Pull → Legs order — no extra junk volume.",
     ],
   },
   {
-    week: "Week 2 — Overload",
+    week: "Block 1 · Overload (Jul 20–31)",
     points: [
       "Per exercise: add 1 rep/set OR +2.5–5% load after topping the rep range.",
-      "Add 5 min to Mon/Thu/Fri cardio (cap 35–40 min after lifting).",
-      "Only the final isolation set may reach technical failure.",
+      "Add 5 min to cardio on Push/Pull days (cap ~35–40 min).",
+      "Aug 1–2: reset — steps + Zone 2 only, sleep hard.",
     ],
   },
   {
-    week: "Week 3 — Peak & reveal",
+    week: "Block 2 · Peak (Aug 3–14)",
     points: [
-      "Mon–Wed: maintain Week 2 performance.",
-      "Thu–Sat: drop one set per compound, keep the weight, stop 1–2 reps short.",
-      "Saturday agility fast but only 3 shuttle reps.",
-      "Sunday: 45–60 min easy Zone 2. Less fatigue = fuller, less inflamed look.",
+      "Hold performance; drop one set on compounds if recovery dips.",
+      "Photos + waist every 7 days. Judge 7-day weight average.",
+      "Finish Aug 14 leaner face/waist — not reckless under-eating.",
     ],
   },
 ];
@@ -266,8 +380,8 @@ export const TRAINING_DAY_TEMPLATE = {
   meals: [
     { slot: "Breakfast", items: ["Shake 1", "3 whole eggs + 2 whites", "2 slices whole-grain bread", "Fruit or veg"] },
     { slot: "Midday", items: ["Shake 2", "1 Oikos protein yogurt"] },
-    { slot: "Pre-workout", items: ["2–4 dates (4 on Wed/Sat, 2 on upper days)", "Tea or coffee", "Water"] },
-    { slot: "Post-workout", items: ["Shake 3", "1 banana on lower days", "~300 g potato or 1–1.5 cups rice", "≥2 cups veg", "1 tsp olive oil / measured sauce"] },
+    { slot: "Pre-workout", items: ["2–4 dates (4 on leg days, 2 on Push/Pull)", "Tea or coffee", "Water"] },
+    { slot: "Post-workout", items: ["Shake 3", "1 banana on leg days", "~300 g potato or 1–1.5 cups rice", "≥2 cups veg", "1 tsp olive oil / measured sauce"] },
     { slot: "Evening", items: ["Shake 4", "Berries / fruit if calories allow"] },
   ] as MealTemplate[],
 };
@@ -292,21 +406,24 @@ export const SUPPLEMENT_GUIDANCE = [
 export const APPEARANCE_RULES = [
   "Weigh in every morning after the bathroom; judge the 7-day average, not one day.",
   "Waist measurement + identical front/side photos every 7 days.",
-  "No restaurant blowouts, alcohol, or high-sodium binges for the full block.",
+  "No restaurant blowouts, alcohol, or high-sodium binges through Aug 14.",
   "Keep carbs around workouts, not zero — zero carbs looks flat, not sharp.",
   "No laxatives, diuretics, dehydration, sweat suits, or marathon sauna for 'fat loss.'",
-  "Realistic 21-day win: smaller waist, leaner face, better chest/shoulder look, preserved strength — not 14 lb of pure fat.",
+  "Realistic win by Aug 14: smaller waist, leaner face, better chest/shoulder look, preserved strength.",
 ];
 
 export function planDayFor(weekDay: number): PlanDay {
   return PLAN_WEEK.find((d) => d.weekDay === weekDay) ?? PLAN_WEEK[0];
 }
 
-/** Which plan week (1–3) a given date falls in, or 0 if outside the block. */
+/** Which progression week (1–3) a date falls in, or 0 if outside active blocks. */
 export function planWeekNumber(fromISO: string): number {
-  const start = new Date(PLAN_START_ISO + "T00:00:00");
-  const now = new Date(fromISO + "T00:00:00");
-  const diffDays = Math.floor((now.getTime() - start.getTime()) / 86_400_000);
-  if (diffDays < 0 || diffDays >= PLAN_DAYS) return 0;
-  return Math.floor(diffDays / 7) + 1;
+  const phase = planPhaseFor(fromISO);
+  if (!phase || phase.rest) return 0;
+  if (phase.id === "block1") {
+    const d = daysBetween(phase.start, fromISO);
+    return d < 7 ? 1 : 2;
+  }
+  if (phase.id === "block2") return 3;
+  return 0;
 }

@@ -33,20 +33,20 @@ const PROFILE = {
   height: "5'6\" (5'7\" with shoes)",
   ethnicity: "Black",
   goal:
-    "21-Day Maximum-Definition block → cut to ~174 lb @ 14–16% BF by Aug 1. 188 lb, ~30% BF now. Keep 86.9 lb muscle, drop trunk fat.",
+    "Definition block Jul 13–31 + Aug 3–14 → ~174 lb @ 14–16% BF. Push/Pull/Legs. Keep 86.9 lb muscle, drop trunk fat. Reset Aug 1–2.",
   target_calories: 2200,
   target_protein: 200,
   target_fat: 55,
   target_carbs: 220,
   notes:
-    "5'6\" (5'7\" w/ shoes), Black, 23. 188 lb, ~30% BF (self-reported). InBody SMM 86.9 lb, score 90. Training 2200 kcal / rest 1950. 200g protein, 4L water, 12–15k steps. 3–4 h training/day. 2 × 30 min sauna/week (Wed & Sun). Creatine 5g, caffeine optional, citrulline optional; review D3 5000 IU & zinc 50mg. Asthma: progressive warm-up before sprints.",
+    "5'6\" (5'7\" w/ shoes), Black, 23. ~188 lb, ~30% BF (self-reported). InBody SMM 86.9 lb, score 90. Push (chest/shoulders/tris) · Pull (back/bis/forearms/core) · Legs (+ core). Training 2200 kcal / rest 1950. 200g protein, 4L water, 12–15k steps. 3–4 h training/day. 2 × 30 min sauna/week (Wed & Sun). Creatine 5g. Asthma: progressive warm-up before sprints.",
   updated_at: new Date().toISOString(),
 };
 
 async function run() {
   const { error } = await sb.from("user_profile").upsert(PROFILE, { onConflict: "id" });
   if (error) throw error;
-  console.log("✓ Profile updated with 3–4 h training/day + 2×30 min sauna/week and plan notes.");
+  console.log("✓ Profile updated for Jul 13–31 / Aug 3–14 PPL cut.");
 }
 
 run().catch((e) => {

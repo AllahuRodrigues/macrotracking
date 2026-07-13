@@ -101,3 +101,4 @@ npx expo run:ios --device "Rodrigues Iphone"
 | codesign / keychain popup | Click **Always Allow** on the Mac |
 | Phone not listed | Unlock phone, unplug/replug USB, trust computer |
 | Cannot find native module ExpoPushTokenManager | Notifications were added in JS but not in the binary. Run `npx expo prebuild --clean`, then Xcode ▶ Run again |
+| Personal Team / Push Notifications / aps-environment | Free Apple IDs **cannot** use remote Push. MacroTrack only needs **local** reminders. Remove **Push Notifications** capability in Xcode if it appears (Signing & Capabilities → −), and keep `plugins/withLocalNotificationsOnly.js` so prebuild does not re-add `aps-environment`. |

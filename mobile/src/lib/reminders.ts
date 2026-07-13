@@ -2,6 +2,7 @@ import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import { requireOptionalNativeModule } from "expo-modules-core";
 import { planDayFor } from "@shared/plan";
+import { RITUAL_REMINDERS } from "@shared/rituals";
 
 const PREFS_KEY = "macro_reminder_prefs_v2";
 
@@ -56,6 +57,7 @@ export type ReminderPrefs = {
   steps: boolean;
   supplements: boolean;
   proteinCheck: boolean;
+  rituals: boolean;
 };
 
 export const DEFAULT_PREFS: ReminderPrefs = {
@@ -71,6 +73,7 @@ export const DEFAULT_PREFS: ReminderPrefs = {
   steps: true,
   supplements: true,
   proteinCheck: true,
+  rituals: true,
 };
 
 export async function loadPrefs(): Promise<ReminderPrefs> {
@@ -230,6 +233,13 @@ export async function applyReminders(prefs: ReminderPrefs): Promise<number> {
     count += 2;
   }
 
+  if (prefs.rituals) {
+    for (const r of RITUAL_REMINDERS) {
+      await daily(Notifications, r.hour, r.minute, r.title, r.body);
+      count++;
+    }
+  }
+
   return count;
 }
 
@@ -240,7 +250,7 @@ export async function sendWelcomeNotification(): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: {
       title: "MacroTrack reminders on ✅",
-      body: "You'll get workout, shake, water & logging nudges. Toggle any time under You → Reminders.",
+      body: "You'll get workout, shake, water, ritual & logging nudges. Toggle under You → Reminders.",
       sound: true,
     },
     trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3 },

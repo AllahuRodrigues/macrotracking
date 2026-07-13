@@ -35,7 +35,7 @@ export default function Gate() {
       >
         <View style={styles.logoWrap}>
           <Text style={styles.logo}>MacroTrack</Text>
-          <AppText muted size={14}>Cut · Train · Track — to Aug 1</AppText>
+          <AppText muted size={14}>Cut · Train · Track — to Aug 14</AppText>
         </View>
 
         {mode === "choose" ? (

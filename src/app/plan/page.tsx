@@ -21,8 +21,10 @@ import { todayISO } from "@/lib/utils";
 import {
   PLAN_TITLE,
   PLAN_SUBTITLE,
-  PLAN_DAYS,
+  PLAN_ACTIVE_DAYS_TOTAL,
   PLAN_START_ISO,
+  PLAN_END_ISO,
+  PLAN_PHASES,
   PLAN_RULES,
   PLAN_EXTRAS,
   PLAN_WEEK,
@@ -35,6 +37,8 @@ import {
   APPEARANCE_RULES,
   planDayFor,
   planWeekNumber,
+  planPhaseFor,
+  planActiveDayCount,
   type PlanDay,
 } from "@/lib/plan";
 
@@ -45,18 +49,13 @@ const VERDICT_STYLE: Record<string, string> = {
   avoid: "bg-red-500/15 text-red-400",
 };
 
-function dayNumberInBlock(): number {
-  const start = new Date(PLAN_START_ISO + "T00:00:00").getTime();
-  const now = new Date(todayISO() + "T00:00:00").getTime();
-  const diff = Math.floor((now - start) / 86_400_000);
-  return diff >= 0 && diff < PLAN_DAYS ? diff + 1 : 0;
-}
-
 export default function PlanPage() {
   const weekday = new Date().getDay();
   const today = planDayFor(weekday);
-  const weekNo = planWeekNumber(todayISO());
-  const dayNo = dayNumberInBlock();
+  const iso = todayISO();
+  const weekNo = planWeekNumber(iso);
+  const phase = planPhaseFor(iso);
+  const activeDay = planActiveDayCount(iso);
 
   return (
     <div className="space-y-6">
@@ -64,14 +63,43 @@ export default function PlanPage() {
       <div className="rounded-2xl bg-gradient-to-br from-[var(--accent)] to-[#0f7a43] p-6 text-[#04140b]">
         <h1 className="text-2xl font-black tracking-tight">{PLAN_TITLE}</h1>
         <p className="mt-1 text-sm opacity-80">{PLAN_SUBTITLE}</p>
-        <div className="mt-4 flex gap-2">
+        <p className="mt-2 text-xs font-medium opacity-70">
+          {PLAN_START_ISO} → {PLAN_END_ISO} · Push · Pull · Legs · Reset Aug 1–2
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
           <span className="rounded-lg bg-black/10 px-3 py-1.5 text-sm font-bold">
-            {dayNo > 0 ? `Day ${dayNo} / ${PLAN_DAYS}` : "Pre-start"}
+            {phase?.rest
+              ? "Reset day"
+              : activeDay > 0
+                ? `Active day ${activeDay} / ${PLAN_ACTIVE_DAYS_TOTAL}`
+                : "Outside window"}
           </span>
+          {phase && (
+            <span className="rounded-lg bg-black/10 px-3 py-1.5 text-sm font-bold">{phase.label}</span>
+          )}
           {weekNo > 0 && (
             <span className="rounded-lg bg-black/10 px-3 py-1.5 text-sm font-bold">Week {weekNo}</span>
           )}
         </div>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-3">
+        {PLAN_PHASES.map((p) => (
+          <div
+            key={p.id}
+            className={`rounded-xl border px-3 py-2.5 text-sm ${
+              phase?.id === p.id
+                ? "border-[var(--accent)]/50 bg-[var(--accent)]/10"
+                : "border-[var(--card-border)] bg-[var(--card)]"
+            }`}
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">{p.label}</p>
+            <p className="font-medium">
+              {p.start.slice(5).replace("-", "/")} → {p.end.slice(5).replace("-", "/")}
+            </p>
+            {p.rest ? <p className="text-xs text-[var(--muted)]">No hard lifts</p> : null}
+          </div>
+        ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -82,6 +110,9 @@ export default function PlanPage() {
             <h3 className="text-lg font-bold">{today.title}</h3>
           </div>
           <p className="text-sm text-[var(--muted)]">{today.focus}</p>
+          {PLAN_EXTRAS.split && (
+            <p className="mt-2 text-xs text-[var(--accent)]">{PLAN_EXTRAS.split}</p>
+          )}
           <DayBlocks day={today} defaultOpen />
         </Card>
 

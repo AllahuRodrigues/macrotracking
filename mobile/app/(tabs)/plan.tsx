@@ -7,8 +7,10 @@ import { todayISO } from "@shared/timezone";
 import {
   PLAN_TITLE,
   PLAN_SUBTITLE,
-  PLAN_DAYS,
+  PLAN_ACTIVE_DAYS_TOTAL,
   PLAN_START_ISO,
+  PLAN_END_ISO,
+  PLAN_PHASES,
   PLAN_RULES,
   PLAN_EXTRAS,
   PLAN_WEEK,
@@ -21,6 +23,8 @@ import {
   APPEARANCE_RULES,
   planDayFor,
   planWeekNumber,
+  planPhaseFor,
+  planActiveDayCount,
   type PlanDay,
 } from "@shared/plan";
 import { Card, AppText, Row, Pill, ScreenTitle } from "@/components/ui";
@@ -33,18 +37,13 @@ const VERDICT_COLOR: Record<string, string> = {
   avoid: theme.colors.red,
 };
 
-function dayNumberInBlock(): number {
-  const start = new Date(PLAN_START_ISO + "T00:00:00");
-  const now = new Date(todayISO() + "T00:00:00");
-  const diff = Math.floor((now.getTime() - start.getTime()) / 86_400_000);
-  return diff >= 0 && diff < PLAN_DAYS ? diff + 1 : 0;
-}
-
 export default function Plan() {
   const weekday = new Date().getDay();
   const today = planDayFor(weekday);
-  const weekNo = planWeekNumber(todayISO());
-  const dayNo = dayNumberInBlock();
+  const iso = todayISO();
+  const weekNo = planWeekNumber(iso);
+  const phase = planPhaseFor(iso);
+  const activeDay = planActiveDayCount(iso);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["top"]}>
@@ -60,12 +59,24 @@ export default function Plan() {
             {PLAN_TITLE}
           </Text>
           <Text style={{ color: "#04240fcc", fontSize: 13, marginTop: 4 }}>{PLAN_SUBTITLE}</Text>
-          <Row style={{ gap: 8, marginTop: 12 }}>
+          <Text style={{ color: "#04240faa", fontSize: 11, marginTop: 6, fontWeight: "600" }}>
+            {PLAN_START_ISO} → {PLAN_END_ISO} · Reset Aug 1–2
+          </Text>
+          <Row style={{ gap: 8, marginTop: 12, flexWrap: "wrap" }}>
             <View style={{ backgroundColor: "#04140b22", borderRadius: theme.radius.md, paddingHorizontal: 12, paddingVertical: 6 }}>
               <Text style={{ color: "#04140b", fontWeight: "800", fontSize: 15 }}>
-                {dayNo > 0 ? `Day ${dayNo} / ${PLAN_DAYS}` : "Pre-start"}
+                {phase?.rest
+                  ? "Reset day"
+                  : activeDay > 0
+                    ? `Day ${activeDay} / ${PLAN_ACTIVE_DAYS_TOTAL}`
+                    : "Outside window"}
               </Text>
             </View>
+            {phase ? (
+              <View style={{ backgroundColor: "#04140b22", borderRadius: theme.radius.md, paddingHorizontal: 12, paddingVertical: 6 }}>
+                <Text style={{ color: "#04140b", fontWeight: "800", fontSize: 15 }}>{phase.label}</Text>
+              </View>
+            ) : null}
             {weekNo > 0 ? (
               <View style={{ backgroundColor: "#04140b22", borderRadius: theme.radius.md, paddingHorizontal: 12, paddingVertical: 6 }}>
                 <Text style={{ color: "#04140b", fontWeight: "800", fontSize: 15 }}>Week {weekNo}</Text>
@@ -73,6 +84,29 @@ export default function Plan() {
             ) : null}
           </Row>
         </LinearGradient>
+
+        <Row style={{ gap: 8 }}>
+          {PLAN_PHASES.map((p) => (
+            <View
+              key={p.id}
+              style={{
+                flex: 1,
+                borderRadius: theme.radius.md,
+                borderWidth: 1,
+                borderColor: phase?.id === p.id ? `${theme.colors.accent}66` : theme.colors.cardBorder,
+                backgroundColor: phase?.id === p.id ? `${theme.colors.accent}18` : theme.colors.card,
+                padding: 10,
+              }}
+            >
+              <AppText muted size={10} bold style={{ textTransform: "uppercase" }}>
+                {p.label}
+              </AppText>
+              <AppText size={12} bold style={{ marginTop: 2 }}>
+                {p.start.slice(5)}→{p.end.slice(5)}
+              </AppText>
+            </View>
+          ))}
+        </Row>
 
         {/* Today's session */}
         <Card>
@@ -82,6 +116,11 @@ export default function Plan() {
           </Row>
           <AppText bold size={17}>{today.title}</AppText>
           <AppText muted size={13} style={{ marginTop: 2 }}>{today.focus}</AppText>
+          {PLAN_EXTRAS.split ? (
+            <AppText size={11} color={theme.colors.accent} style={{ marginTop: 6 }}>
+              {PLAN_EXTRAS.split}
+            </AppText>
+          ) : null}
           <DayBlocks day={today} defaultOpen />
         </Card>
 

@@ -35,7 +35,7 @@ export default function PhotosPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Photo Tracking</h1>
         <p className="text-sm text-[var(--muted)]">
-          Body check-ins through Aug 1, 2026 — progress pics, weight, and meal photos.
+          Body check-ins through Aug 14, 2026 — progress pics, weight, and meal photos.
         </p>
       </div>
 
