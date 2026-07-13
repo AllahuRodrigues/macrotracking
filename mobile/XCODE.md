@@ -100,3 +100,4 @@ npx expo run:ios --device "Rodrigues Iphone"
 | Bundle ID unavailable | Change to `com.allahu.macrotrack` |
 | codesign / keychain popup | Click **Always Allow** on the Mac |
 | Phone not listed | Unlock phone, unplug/replug USB, trust computer |
+| Cannot find native module ExpoPushTokenManager | Notifications were added in JS but not in the binary. Run `npx expo prebuild --clean`, then Xcode ▶ Run again |

@@ -1,12 +1,12 @@
 import "react-native-gesture-handler";
 import React, { useEffect, useState } from "react";
 import { Stack, useRouter } from "expo-router";
-import * as Notifications from "expo-notifications";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/lib/AuthContext";
+import { addNotificationResponseListener } from "@/lib/reminders";
 import { theme } from "@/lib/theme";
 
 export default function RootLayout() {
@@ -21,10 +21,9 @@ export default function RootLayout() {
   );
 
   useEffect(() => {
-    const sub = Notifications.addNotificationResponseReceivedListener((resp) => {
-      const data = resp.notification.request.content.data as { screen?: string } | undefined;
-      if (data?.screen === "log") router.push("/(tabs)/log");
-      else if (data?.screen === "train") router.push("/(tabs)/train");
+    const sub = addNotificationResponseListener((screen) => {
+      if (screen === "log") router.push("/(tabs)/log");
+      else if (screen === "train") router.push("/(tabs)/train");
     });
     return () => sub.remove();
   }, [router]);
