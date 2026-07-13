@@ -21,7 +21,7 @@ import { DateNav } from "@/components/DateNav";
 import { Card, AppText, ScreenTitle, Button, Row, Pill } from "@/components/ui";
 import { theme } from "@/lib/theme";
 
-export default function Meals() {
+export default function Meals({ embedded = false }: { embedded?: boolean }) {
   const [date, setDate] = useState(todayISO());
   const router = useRouter();
   const { canWrite } = useAuth();
@@ -34,7 +34,7 @@ export default function Meals() {
   const byMeal = (m: MealType) => list.filter((e) => e.meal_type === m);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={embedded ? [] : ["top"]}>
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         refreshControl={
@@ -42,7 +42,7 @@ export default function Meals() {
         }
       >
         <Row style={{ justifyContent: "space-between" }}>
-          <ScreenTitle title="Meals" />
+          {!embedded ? <ScreenTitle title="Meals" /> : null}
           {canWrite ? (
             <Row style={{ gap: 4 }}>
               <Pressable

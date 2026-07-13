@@ -46,7 +46,7 @@ async function saveStoreLocal(date: string, day: Record<string, boolean>) {
 
 const CATS = (Object.keys(RITUAL_CATEGORY_META) as RitualCategory[]).filter((c) => c !== "kit");
 
-export default function RitualsScreen() {
+export default function RitualsScreen({ embedded = false }: { embedded?: boolean }) {
   const date = todayISO();
   const [tab, setTab] = useState<Tab>("today");
   const [done, setDone] = useState<Record<string, boolean>>({});
@@ -88,12 +88,18 @@ export default function RitualsScreen() {
   const progress = dailyRitualProgress(done);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={embedded ? [] : ["top"]}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
-        <ScreenTitle
-          title="Rituals"
-          subtitle="Look sharp · smell good · zero Zyns · muscle up"
-        />
+        {!embedded ? (
+          <ScreenTitle
+            title="Rituals"
+            subtitle="Look sharp · smell good · zero Zyns · muscle up"
+          />
+        ) : (
+          <AppText muted size={13} style={{ marginBottom: 10 }}>
+            Look sharp · smell good · zero Zyns
+          </AppText>
+        )}
 
         <Row style={{ justifyContent: "space-between", marginBottom: 12 }}>
           <AppText muted size={13}>

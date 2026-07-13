@@ -211,11 +211,24 @@ export default function Profile() {
         </Card>
 
         <Row style={{ gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-          <NavChip label="Body" onPress={() => router.push("/(tabs)/body")} />
-          <NavChip label="Progress" onPress={() => router.push("/(tabs)/progress")} />
-          <NavChip label="Plan" onPress={() => router.push("/(tabs)/plan")} />
-          <NavChip label="Rituals" onPress={() => router.push("/(tabs)/rituals")} />
-          <NavChip label="Supps" onPress={() => router.push("/(tabs)/supplements")} />
+          <NavChip
+            label="Body"
+            onPress={() => router.push({ pathname: "/(tabs)/progress", params: { seg: "body" } })}
+          />
+          <NavChip
+            label="Photos"
+            onPress={() => router.push({ pathname: "/(tabs)/progress", params: { seg: "photos" } })}
+          />
+          <NavChip label="Train" onPress={() => router.push("/(tabs)/train")} />
+          <NavChip
+            label="Plan"
+            onPress={() => router.push({ pathname: "/(tabs)/train", params: { seg: "plan" } })}
+          />
+          <NavChip
+            label="Rituals"
+            onPress={() => router.push({ pathname: "/(tabs)/train", params: { seg: "rituals" } })}
+          />
+          <NavChip label="Log food" onPress={() => router.push("/(tabs)/log")} />
         </Row>
 
         <View style={{ marginBottom: 14 }}>

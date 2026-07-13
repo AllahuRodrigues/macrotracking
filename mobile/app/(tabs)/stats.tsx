@@ -28,7 +28,7 @@ function loggingStreak(macros: DailyMacroSummary[]): number {
   return streak;
 }
 
-export default function Stats() {
+export default function Stats({ embedded = false }: { embedded?: boolean }) {
   const trends = useTrends(30);
   const macrosNewestFirst = trends.data?.macros ?? [];
   const macros = [...macrosNewestFirst].reverse(); // oldest→newest for charts
@@ -79,12 +79,17 @@ export default function Stats() {
   }));
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["top"]}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: theme.colors.background }}
+      edges={embedded ? [] : ["top"]}
+    >
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         refreshControl={<RefreshControl refreshing={trends.isFetching} onRefresh={() => trends.refetch()} tintColor={theme.colors.accent} />}
       >
-        <ScreenTitle title="Stats" subtitle="Last 30 days" />
+        {!embedded ? <ScreenTitle title="Stats" subtitle="Last 30 days" /> : (
+          <AppText muted size={13} style={{ marginBottom: 10 }}>Last 30 days</AppText>
+        )}
 
         {/* Hero stat tiles */}
         <Animated.View entering={FadeInDown.springify()}>

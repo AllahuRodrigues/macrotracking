@@ -220,18 +220,29 @@ export default function Dashboard() {
             </Card>
           </Animated.View>
 
-          {/* Today's workout */}
+          {/* Today's workout — tap to open Train / Start */}
           <Animated.View entering={FadeInDown.delay(320).springify()}>
-            <Card>
-              <AppText bold size={16} style={{ marginBottom: 4 }}>
-                {session.data?.session?.name ?? "Today's Workout"}
-              </AppText>
-              {session.data?.exercises?.length ? (
-                <AppText muted size={13}>{session.data.exercises.length} exercises · tap Train to log sets</AppText>
-              ) : (
-                <AppText muted size={13}>Open Train → Start session to log weight × reps.</AppText>
-              )}
-            </Card>
+            <PressableScale onPress={() => router.push("/(tabs)/train")}>
+              <Card>
+                <Row style={{ justifyContent: "space-between", alignItems: "center" }}>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
+                    <AppText bold size={16} style={{ marginBottom: 4 }}>
+                      {session.data?.session?.name ?? "Today's Workout"}
+                    </AppText>
+                    {session.data?.exercises?.length ? (
+                      <AppText muted size={13}>
+                        {session.data.exercises.length} exercises · tap to log sets
+                      </AppText>
+                    ) : (
+                      <AppText muted size={13}>
+                        Tap to start session · log weight × reps
+                      </AppText>
+                    )}
+                  </View>
+                  <Ionicons name="chevron-forward" size={22} color={theme.colors.accent} />
+                </Row>
+              </Card>
+            </PressableScale>
           </Animated.View>
 
           {report.data?.weekly_report ? (

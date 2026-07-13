@@ -40,7 +40,7 @@ import {
 type Tab = "today" | "program" | "history";
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export default function Workout() {
+export default function Workout({ embedded = false }: { embedded?: boolean }) {
   const [tab, setTab] = useState<Tab>("today");
   const date = todayISO();
   const today = weekdayIndexISO(date);
@@ -118,14 +118,20 @@ export default function Workout() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={embedded ? [] : ["top"]}>
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
         refreshControl={
           <RefreshControl refreshing={todayTemplate.isFetching} onRefresh={refresh} tintColor={theme.colors.accent} />
         }
       >
-        <ScreenTitle title="Workout" subtitle={`${DAY_NAMES[today]} · ${formatDateMedium(date)}`} />
+        {!embedded ? (
+          <ScreenTitle title="Workout" subtitle={`${DAY_NAMES[today]} · ${formatDateMedium(date)}`} />
+        ) : (
+          <AppText muted size={13} style={{ marginBottom: 10 }}>
+            {DAY_NAMES[today]} · {formatDateMedium(date)} · Start below
+          </AppText>
+        )}
 
         <Row style={{ gap: 6, marginBottom: 16, backgroundColor: theme.colors.card, borderRadius: theme.radius.md, padding: 4 }}>
           {(["today", "program", "history"] as Tab[]).map((t) => (

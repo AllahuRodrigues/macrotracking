@@ -37,7 +37,7 @@ const VERDICT_COLOR: Record<string, string> = {
   avoid: theme.colors.red,
 };
 
-export default function Plan() {
+export default function Plan({ embedded = false }: { embedded?: boolean }) {
   const weekday = new Date().getDay();
   const today = planDayFor(weekday);
   const iso = todayISO();
@@ -46,7 +46,7 @@ export default function Plan() {
   const activeDay = planActiveDayCount(iso);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={embedded ? [] : ["top"]}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48, gap: 14 }}>
         {/* Hero */}
         <LinearGradient

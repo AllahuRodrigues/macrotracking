@@ -9,7 +9,7 @@ import { DateNav } from "@/components/DateNav";
 import { Card, AppText, ScreenTitle, Row, Pill } from "@/components/ui";
 import { theme } from "@/lib/theme";
 
-export default function Supplements() {
+export default function Supplements({ embedded = false }: { embedded?: boolean }) {
   const [date, setDate] = useState(todayISO());
   const { canWrite } = useAuth();
   const intake = useSupplementIntake(date);
@@ -23,12 +23,12 @@ export default function Supplements() {
   const pct = total > 0 ? Math.round((taken / total) * 100) : 0;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["top"]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={embedded ? [] : ["top"]}>
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         refreshControl={<RefreshControl refreshing={intake.isFetching} onRefresh={() => intake.refetch()} tintColor={theme.colors.accent} />}
       >
-        <ScreenTitle title="Supplements" />
+        {!embedded ? <ScreenTitle title="Supplements" /> : null}
         <DateNav date={date} onChange={setDate} />
 
         <Card style={{ marginBottom: 16 }}>

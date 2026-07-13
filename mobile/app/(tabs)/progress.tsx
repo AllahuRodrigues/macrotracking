@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, View, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { SegmentBar } from "@/components/SegmentBar";
 import { InsightsHero, InsightsDetail } from "@/components/InsightsCard";
@@ -12,79 +13,69 @@ import Body from "./body";
 import Photos from "./photos";
 import Stats from "./stats";
 
-type Seg = "science" | "body" | "photos" | "charts";
+type Seg = "body" | "photos" | "science" | "charts";
 
 const SEGMENTS: { key: Seg; label: string }[] = [
-  { key: "science", label: "Insights" },
-  { key: "charts", label: "Charts" },
   { key: "body", label: "Body" },
   { key: "photos", label: "Photos" },
+  { key: "science", label: "Insights" },
+  { key: "charts", label: "Charts" },
 ];
 
-function SegmentHeader({ seg, setSeg }: { seg: Seg; setSeg: (s: Seg) => void }) {
-  return (
-    <View style={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 }}>
-      <SegmentBar options={SEGMENTS} value={seg} onChange={setSeg} />
-    </View>
-  );
+function isSeg(v: unknown): v is Seg {
+  return v === "body" || v === "photos" || v === "science" || v === "charts";
 }
 
+/** Progress hub — Body & Photos first so they’re one tap away. */
 export default function ProgressHub() {
-  const [seg, setSeg] = useState<Seg>("science");
+  const params = useLocalSearchParams<{ seg?: string }>();
+  const [seg, setSeg] = useState<Seg>(isSeg(params.seg) ? params.seg : "body");
   const insights = useQuery({
     queryKey: ["insights"],
     queryFn: () => api.getInsights(60),
   });
 
-  if (seg === "body") {
-    return (
-      <View style={{ flex: 1 }}>
-        <SegmentHeader seg={seg} setSeg={setSeg} />
-        <Body />
-      </View>
-    );
-  }
-  if (seg === "photos") {
-    return (
-      <View style={{ flex: 1 }}>
-        <SegmentHeader seg={seg} setSeg={setSeg} />
-        <Photos />
-      </View>
-    );
-  }
-  if (seg === "charts") {
-    return (
-      <View style={{ flex: 1 }}>
-        <SegmentHeader seg={seg} setSeg={setSeg} />
-        <Stats />
-      </View>
-    );
-  }
+  useEffect(() => {
+    if (isSeg(params.seg)) setSeg(params.seg);
+  }, [params.seg]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }} edges={["top"]}>
-      <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-        refreshControl={
-          <RefreshControl
-            refreshing={insights.isFetching}
-            onRefresh={() => insights.refetch()}
-            tintColor={theme.colors.accent}
-          />
-        }
-      >
-        <ScreenTitle title="Progress" subtitle="What happened · why · what next" />
-        <QuickLogBar />
+      <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+        <ScreenTitle title="Progress" subtitle="Body · photos · insights · charts" />
         <SegmentBar options={SEGMENTS} value={seg} onChange={setSeg} />
-        {insights.isLoading && <AppText muted>Loading insights…</AppText>}
-        {insights.data && (
-          <>
-            <InsightsHero data={insights.data} />
-            <View style={{ height: 12 }} />
-            <InsightsDetail data={insights.data} />
-          </>
-        )}
-      </ScrollView>
+      </View>
+
+      {seg === "body" ? (
+        <Body embedded onOpenPhotos={() => setSeg("photos")} />
+      ) : null}
+
+      {seg === "photos" ? <Photos embedded /> : null}
+
+      {seg === "charts" ? <Stats embedded /> : null}
+
+      {seg === "science" ? (
+        <ScrollView
+          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={insights.isFetching}
+              onRefresh={() => insights.refetch()}
+              tintColor={theme.colors.accent}
+            />
+          }
+        >
+          <QuickLogBar />
+          {insights.isLoading && <AppText muted>Loading insights…</AppText>}
+          {insights.data && (
+            <>
+              <InsightsHero data={insights.data} />
+              <View style={{ height: 12 }} />
+              <InsightsDetail data={insights.data} />
+            </>
+          )}
+        </ScrollView>
+      ) : null}
     </SafeAreaView>
   );
 }
