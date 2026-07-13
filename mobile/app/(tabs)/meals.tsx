@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { todayISO } from "@shared/timezone";
 import { MEAL_TYPES, mealLabel } from "@shared/utils";
 import type { FoodEntry, MealType } from "@shared/types";
@@ -22,6 +23,7 @@ import { theme } from "@/lib/theme";
 
 export default function Meals() {
   const [date, setDate] = useState(todayISO());
+  const router = useRouter();
   const { canWrite } = useAuth();
   const entries = useEntries(date);
   const createEntry = useCreateEntry(date);
@@ -42,9 +44,17 @@ export default function Meals() {
         <Row style={{ justifyContent: "space-between" }}>
           <ScreenTitle title="Meals" />
           {canWrite ? (
-            <Pressable onPress={() => setModal(true)} style={{ padding: 8 }}>
-              <Ionicons name="add-circle" size={30} color={theme.colors.accent} />
-            </Pressable>
+            <Row style={{ gap: 4 }}>
+              <Pressable
+                onPress={() => router.push({ pathname: "/ai-scan", params: { date } })}
+                style={{ padding: 8 }}
+              >
+                <Ionicons name="sparkles" size={26} color={theme.colors.accentWarm} />
+              </Pressable>
+              <Pressable onPress={() => setModal(true)} style={{ padding: 8 }}>
+                <Ionicons name="add-circle" size={30} color={theme.colors.accent} />
+              </Pressable>
+            </Row>
           ) : null}
         </Row>
         <DateNav date={date} onChange={setDate} />

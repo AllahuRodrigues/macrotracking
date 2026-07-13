@@ -13,6 +13,7 @@ import { imageUrl } from "@/lib/images";
 import { useProfile } from "@/api/queries";
 import { useAuth } from "@/lib/AuthContext";
 import { Card, AppText, ScreenTitle, Row, Pill, Button } from "@/components/ui";
+import { RemindersCard } from "@/components/RemindersCard";
 import { theme } from "@/lib/theme";
 import { ACCESS_CODE_HEADER } from "@shared/access";
 
@@ -68,7 +69,11 @@ export default function Profile() {
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         refreshControl={<RefreshControl refreshing={profile.isFetching} onRefresh={() => profile.refetch()} tintColor={theme.colors.accent} />}
       >
-        <ScreenTitle title="Profile" />
+        <ScreenTitle title="You" subtitle="Profile · reminders · export" />
+
+        <View style={{ marginBottom: 16 }}>
+          <RemindersCard />
+        </View>
 
         <Card style={{ alignItems: "center", marginBottom: 16 }}>
           <Image

@@ -2,13 +2,16 @@ import React, { useState } from "react";
 import { ScrollView, View, RefreshControl, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useQueryClient } from "@tanstack/react-query";
 import { todayISO, weekdayIndexISO } from "@shared/timezone";
 import { WORKOUT_DAY_GOALS, REST_DAY_GOALS, WATER_GOAL_ML } from "@shared/types";
-import { useDaySummary, useWater, useAddWater, useTodaySession } from "@/api/queries";
+import { useDaySummary, useWater, useAddWater, useTodaySession, useInsights } from "@/api/queries";
 import { DateNav } from "@/components/DateNav";
 import { MacroRing, MacroBar } from "@/components/MacroRing";
+import { InsightsHero } from "@/components/InsightsCard";
 import { Card, AppText, Pill, Row } from "@/components/ui";
 import { AnimatedCounter, PressableScale } from "@/components/anim";
 import { theme } from "@/lib/theme";
@@ -23,6 +26,7 @@ function greeting() {
 }
 
 export default function Dashboard() {
+  const router = useRouter();
   const [date, setDate] = useState(todayISO());
   const isSunday = weekdayIndexISO(date) === 0;
   const [dayType, setDayType] = useState<DayType>(isSunday ? "rest" : "workout");
@@ -31,6 +35,7 @@ export default function Dashboard() {
   const summary = useDaySummary(date);
   const water = useWater(date);
   const session = useTodaySession(date);
+  const insights = useInsights(60);
   const addWater = useAddWater(date);
   const qc = useQueryClient();
 
@@ -71,6 +76,31 @@ export default function Dashboard() {
 
         <View style={{ padding: 16 }}>
           <DateNav date={date} onChange={setDate} />
+
+          {insights.data ? (
+            <Animated.View entering={FadeInDown.delay(20).springify()} style={{ marginBottom: 14 }}>
+              <InsightsHero data={insights.data} />
+            </Animated.View>
+          ) : null}
+
+          {/* AI scan quick action */}
+          <Animated.View entering={FadeInDown.delay(40).springify()}>
+            <PressableScale onPress={() => router.push({ pathname: "/ai-scan", params: { date } })} style={{ marginBottom: 16 }}>
+              <LinearGradient
+                colors={[theme.colors.accentWarm, "#b45309"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ borderRadius: theme.radius.lg, padding: 16, flexDirection: "row", alignItems: "center", gap: 12 }}
+              >
+                <Ionicons name="sparkles" size={26} color="#1a0e02" />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: "#1a0e02", fontWeight: "900", fontSize: 16 }}>Scan a meal with AI</Text>
+                  <Text style={{ color: "#1a0e02cc", fontSize: 12 }}>Snap a photo → instant macros → one-tap log</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#1a0e02" />
+              </LinearGradient>
+            </PressableScale>
+          </Animated.View>
 
           {/* Day type toggle */}
           <Row style={{ gap: 8, marginBottom: 16 }}>

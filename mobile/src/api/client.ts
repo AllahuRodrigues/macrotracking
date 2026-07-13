@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "@/lib/config";
 import { getAccessCode } from "@/lib/auth";
 import { ACCESS_CODE_HEADER } from "@shared/access";
+import type { InsightsPayload } from "@shared/insights";
 import type {
   FoodEntry,
   BodyMetric,
@@ -172,6 +173,37 @@ export const api = {
   // Profile
   getProfile: () => req<UserProfile | null>("/api/profile"),
 
+  // AI food analysis
+  analyzeFood: (image: string, hint?: string) =>
+    jsonReq<AnalyzeFoodResult>("/api/analyze-food", "POST", { image, hint }),
+  getAiUsage: () =>
+    req<{
+      date: string;
+      spent_usd: number;
+      requests: number;
+      budget_usd: number;
+      remaining_usd: number;
+    }>("/api/analyze-food"),
+
+  getInsights: (days = 60) => req<InsightsPayload>(`/api/insights?days=${days}`),
+
   // Export
   exportUrl: () => `${API_BASE_URL}/api/export`,
+};
+
+export type AnalyzedFoodItem = {
+  name: string;
+  quantity?: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  confidence?: "low" | "medium" | "high";
+};
+
+export type AnalyzeFoodResult = {
+  items: AnalyzedFoodItem[];
+  summary: string;
+  totals: { calories: number; protein: number; carbs: number; fat: number };
+  cost_usd: number;
 };

@@ -13,6 +13,7 @@ function tabIcon(name: IconName) {
   return Icon;
 }
 
+/** Premium 5-tab layout — deep screens stay reachable but hidden from the bar. */
 export default function TabsLayout() {
   return (
     <Tabs
@@ -23,18 +24,26 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: theme.colors.card,
           borderTopColor: theme.colors.cardBorder,
+          height: 56,
+          paddingBottom: 4,
         },
-        tabBarLabelStyle: { fontSize: 10 },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Home", tabBarIcon: tabIcon("home") }} />
-      <Tabs.Screen name="meals" options={{ title: "Meals", tabBarIcon: tabIcon("restaurant") }} />
-      <Tabs.Screen name="workout" options={{ title: "Workout", tabBarIcon: tabIcon("barbell") }} />
-      <Tabs.Screen name="supplements" options={{ title: "Supps", tabBarIcon: tabIcon("medkit") }} />
-      <Tabs.Screen name="body" options={{ title: "Body", tabBarIcon: tabIcon("body") }} />
-      <Tabs.Screen name="photos" options={{ title: "Photos", tabBarIcon: tabIcon("camera") }} />
-      <Tabs.Screen name="stats" options={{ title: "Stats", tabBarIcon: tabIcon("stats-chart") }} />
-      <Tabs.Screen name="profile" options={{ title: "Profile", tabBarIcon: tabIcon("person") }} />
+      <Tabs.Screen name="log" options={{ title: "Log", tabBarIcon: tabIcon("create") }} />
+      <Tabs.Screen name="train" options={{ title: "Train", tabBarIcon: tabIcon("barbell") }} />
+      <Tabs.Screen name="progress" options={{ title: "Progress", tabBarIcon: tabIcon("analytics") }} />
+      <Tabs.Screen name="profile" options={{ title: "You", tabBarIcon: tabIcon("person") }} />
+
+      {/* Hidden — reachable from hubs */}
+      <Tabs.Screen name="meals" options={{ href: null }} />
+      <Tabs.Screen name="workout" options={{ href: null }} />
+      <Tabs.Screen name="plan" options={{ href: null }} />
+      <Tabs.Screen name="supplements" options={{ href: null }} />
+      <Tabs.Screen name="body" options={{ href: null }} />
+      <Tabs.Screen name="photos" options={{ href: null }} />
+      <Tabs.Screen name="stats" options={{ href: null }} />
     </Tabs>
   );
 }

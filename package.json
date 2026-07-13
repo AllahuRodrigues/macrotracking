@@ -14,7 +14,8 @@
     "sync-workout-program": "node scripts/sync-workout-program.mjs",
     "sync-user-data": "node scripts/sync-user-data.mjs",
     "sync-inbody-june9": "node scripts/sync-inbody-june9.mjs",
-    "sync-photos-june9": "node scripts/sync-photos-june9.mjs"
+    "sync-photos-june9": "node scripts/sync-photos-june9.mjs",
+    "sync-profile-plan": "node scripts/sync-profile-plan.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

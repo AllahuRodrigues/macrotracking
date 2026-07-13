@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { FoodEntry } from "@/lib/types";
 import { MACRO_COLORS, todayISO, formatDateLong } from "@/lib/utils";
 import { FoodEntryForm, FoodEntryList } from "@/components/FoodEntryForm";
+import { AiFoodScan } from "@/components/AiFoodScan";
 import { MacroBar } from "@/components/MacroRing";
 import { Card } from "@/components/ui";
 import { DateNav } from "@/components/DatePicker";
@@ -78,6 +79,8 @@ export default function MealsPage() {
           <MacroBar label="Carbs" current={totals.carbs} goal={goals.carbs} color={MACRO_COLORS.carbs} />
         </div>
       </Card>
+
+      {canWrite && <AiFoodScan date={date} onSaved={load} />}
 
       {canWrite && (
         <FoodEntryForm

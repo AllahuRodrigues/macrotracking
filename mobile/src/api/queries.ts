@@ -46,6 +46,9 @@ export const useHistory = (limit = 30) =>
 export const useProfile = () =>
   useQuery({ queryKey: ["profile"], queryFn: () => api.getProfile() });
 
+export const useInsights = (days = 60) =>
+  useQuery({ queryKey: ["insights", days], queryFn: () => api.getInsights(days), staleTime: 120_000 });
+
 // ── Mutations ────────────────────────────────────────────────────────────────
 export function useCreateEntry(date: string) {
   const qc = useQueryClient();

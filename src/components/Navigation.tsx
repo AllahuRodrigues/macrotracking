@@ -11,6 +11,7 @@ import {
   Dumbbell,
   UserCircle,
   Pill,
+  ClipboardList,
   LogOut,
 } from "lucide-react";
 import { useAccess } from "@/context/AccessProvider";
@@ -20,6 +21,7 @@ const NAV = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/meals", label: "Meals", icon: UtensilsCrossed },
   { href: "/workout", label: "Workout", icon: Dumbbell },
+  { href: "/plan", label: "Plan", icon: ClipboardList },
   { href: "/supplements", label: "Supps", icon: Pill },
   { href: "/body", label: "Body", icon: Scale },
   { href: "/photos", label: "Photos", icon: Camera },

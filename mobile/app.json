@@ -42,6 +42,12 @@
           "photosPermission": "MacroTrack needs access to your photos to log progress pictures.",
           "cameraPermission": "MacroTrack needs your camera to take progress pictures."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#4ade80"
+        }
       ]
     ],
     "experiments": {

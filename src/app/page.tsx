@@ -12,6 +12,8 @@ import { DayTypeToggle } from "@/components/DayTypeToggle";
 import { SupplementDailyTracker } from "@/components/SupplementDailyTracker";
 import { useDayType } from "@/lib/useDayType";
 import { useAccess } from "@/context/AccessProvider";
+import { InsightsPanel } from "@/components/InsightsPanel";
+import type { InsightsPayload } from "@/lib/insights";
 
 export default function DashboardPage() {
   const [date, setDate] = useState(todayISO());
@@ -25,14 +27,16 @@ export default function DashboardPage() {
     fromSupplements: { protein: 0, calories: 0 },
   });
   const [latestBody, setLatestBody] = useState<BodyMetric | null>(null);
+  const [insights, setInsights] = useState<InsightsPayload | null>(null);
   const { dayType, setDayType, goals } = useDayType();
   const { canWrite } = useAccess();
 
   const load = useCallback(async () => {
-    const [entriesRes, statsRes, bodyRes] = await Promise.all([
+    const [entriesRes, statsRes, bodyRes, insightsRes] = await Promise.all([
       fetch(`/api/entries?date=${date}`),
       fetch(`/api/stats?date=${date}`),
       fetch("/api/body?limit=1"),
+      fetch("/api/insights?days=60"),
     ]);
     setEntries(await entriesRes.json());
     const s = await statsRes.json();
@@ -52,6 +56,7 @@ export default function DashboardPage() {
     });
     const body = await bodyRes.json();
     setLatestBody(body[0] ?? null);
+    setInsights(await insightsRes.json());
   }, [date]);
 
   useEffect(() => { load(); }, [load]);
@@ -74,6 +79,8 @@ export default function DashboardPage() {
       </div>
 
       <DayTypeToggle dayType={dayType} setDayType={setDayType} />
+
+      {insights && <InsightsPanel data={insights} />}
 
       <Card className="!p-6">
         <div className="mb-4 text-center">

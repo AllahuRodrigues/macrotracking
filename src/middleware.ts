@@ -12,6 +12,7 @@ const PROTECTED_PREFIXES = [
   "/api/profile",
   "/api/water",
   "/api/workouts",
+  "/api/analyze-food",
 ];
 
 /** Allow the native app (and browsers) to call the API cross-origin. */
