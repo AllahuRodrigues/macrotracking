@@ -145,8 +145,8 @@ export function BodyMetricForm({ onSaved, editMetric, onCancelEdit }: BodyMetric
 
 interface BodyMetricListProps {
   metrics: BodyMetric[];
-  onEdit: (m: BodyMetric) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (m: BodyMetric) => void;
+  onDelete?: (id: string) => void;
 }
 
 export function BodyMetricList({ metrics, onEdit, onDelete }: BodyMetricListProps) {
@@ -167,14 +167,20 @@ export function BodyMetricList({ metrics, onEdit, onDelete }: BodyMetricListProp
         >
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm font-semibold">{m.date}</span>
-            <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-              <button onClick={() => onEdit(m)} className="rounded p-1.5 text-[var(--muted)] hover:bg-[var(--card-border)]">
-                <Pencil size={14} />
-              </button>
-              <button onClick={() => onDelete(m.id)} className="rounded p-1.5 text-[var(--muted)] hover:bg-red-600/20 hover:text-red-400">
-                <Trash2 size={14} />
-              </button>
-            </div>
+            {(onEdit || onDelete) && (
+              <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                {onEdit && (
+                  <button onClick={() => onEdit(m)} className="rounded p-1.5 text-[var(--muted)] hover:bg-[var(--card-border)]">
+                    <Pencil size={14} />
+                  </button>
+                )}
+                {onDelete && (
+                  <button onClick={() => onDelete(m.id)} className="rounded p-1.5 text-[var(--muted)] hover:bg-red-600/20 hover:text-red-400">
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-3 gap-2 text-xs sm:grid-cols-5">
             {m.weight_lbs != null && <MetricCell label="Weight" value={`${m.weight_lbs} lbs`} />}

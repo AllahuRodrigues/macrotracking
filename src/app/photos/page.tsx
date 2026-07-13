@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { BodyMetric, PhotoEntry } from "@/lib/types";
 import { PhotoUpload, PhotoGallery } from "@/components/PhotoUpload";
 import { BodyProgressTracker } from "@/components/BodyProgressTracker";
+import { QuickLogPanel } from "@/components/QuickLogPanel";
 import { Card } from "@/components/ui";
 import { GuestBanner } from "@/components/GuestBanner";
 import { useAccess } from "@/context/AccessProvider";
