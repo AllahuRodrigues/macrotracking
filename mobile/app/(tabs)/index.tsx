@@ -8,13 +8,14 @@ import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { todayISO, weekdayIndexISO } from "@shared/timezone";
 import { WORKOUT_DAY_GOALS, REST_DAY_GOALS, WATER_GOAL_ML } from "@shared/types";
-import { useDaySummary, useWater, useAddWater, useTodaySession, useInsights } from "@/api/queries";
+import { useDaySummary, useWater, useAddWater, useTodaySession, useInsights, useTips } from "@/api/queries";
 import { DateNav } from "@/components/DateNav";
 import { MacroRing, MacroBar } from "@/components/MacroRing";
 import { InsightsHero } from "@/components/InsightsCard";
 import { CheckinCard } from "@/components/CheckinCard";
 import { MealRiskCard, WeeklyReportCard } from "@/components/MealRiskCard";
 import { QuickLogBar } from "@/components/QuickLog";
+import { TipsTodayCard } from "@/components/TipsTodayCard";
 import { Card, AppText, Pill, Row } from "@/components/ui";
 import { AnimatedCounter, PressableScale } from "@/components/anim";
 import { theme } from "@/lib/theme";
@@ -40,6 +41,7 @@ export default function Dashboard() {
   const water = useWater(date);
   const session = useTodaySession(date);
   const insights = useInsights(60);
+  const tips = useTips(date);
   const report = useQuery({
     queryKey: ["report", date],
     queryFn: () => api.getReport(date),
@@ -52,7 +54,7 @@ export default function Dashboard() {
   const waterPct = Math.min(100, Math.round((waterMl / WATER_GOAL_ML) * 100));
   const remaining = Math.max(0, goals.calories - (s?.calories ?? 0));
 
-  const refreshing = summary.isFetching || water.isFetching;
+  const refreshing = summary.isFetching || water.isFetching || tips.isFetching;
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -88,6 +90,12 @@ export default function Dashboard() {
           {insights.data ? (
             <Animated.View entering={FadeInDown.delay(20).springify()} style={{ marginBottom: 14 }}>
               <InsightsHero data={insights.data} />
+            </Animated.View>
+          ) : null}
+
+          {tips.data ? (
+            <Animated.View entering={FadeInDown.delay(25).springify()} style={{ marginBottom: 14 }}>
+              <TipsTodayCard data={tips.data} />
             </Animated.View>
           ) : null}
 

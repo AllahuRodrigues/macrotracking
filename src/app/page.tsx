@@ -15,8 +15,10 @@ import { useAccess } from "@/context/AccessProvider";
 import { InsightsPanel } from "@/components/InsightsPanel";
 import { CheckinPanel, MealRiskPanel, WeeklyReportPanel } from "@/components/CheckinPanel";
 import { QuickLogPanel } from "@/components/QuickLogPanel";
+import { TipsTodayPanel } from "@/components/TipsTodayPanel";
 import type { InsightsPayload } from "@/lib/insights";
 import type { MealRisk, WeeklyReport } from "@/lib/meal-risk";
+import type { DailyTipsPayload } from "@/lib/daily-tips";
 
 export default function DashboardPage() {
   const [date, setDate] = useState(todayISO());
@@ -33,16 +35,18 @@ export default function DashboardPage() {
   const [insights, setInsights] = useState<InsightsPayload | null>(null);
   const [mealRisk, setMealRisk] = useState<MealRisk | null>(null);
   const [weekly, setWeekly] = useState<WeeklyReport | null>(null);
+  const [tips, setTips] = useState<DailyTipsPayload | null>(null);
   const { dayType, setDayType, goals } = useDayType();
   const { canWrite } = useAccess();
 
   const load = useCallback(async () => {
-    const [entriesRes, statsRes, bodyRes, insightsRes, reportRes] = await Promise.all([
+    const [entriesRes, statsRes, bodyRes, insightsRes, reportRes, tipsRes] = await Promise.all([
       fetch(`/api/entries?date=${date}`),
       fetch(`/api/stats?date=${date}`),
       fetch("/api/body?limit=1"),
       fetch("/api/insights?days=60"),
       fetch(`/api/report?date=${date}`),
+      fetch(`/api/tips?date=${date}`),
     ]);
     setEntries(await entriesRes.json());
     const s = await statsRes.json();
@@ -66,6 +70,7 @@ export default function DashboardPage() {
     const report = await reportRes.json();
     setMealRisk(report.meal_risk ?? null);
     setWeekly(report.weekly_report ?? null);
+    setTips(await tipsRes.json());
   }, [date]);
 
   useEffect(() => { load(); }, [load]);
@@ -89,6 +94,7 @@ export default function DashboardPage() {
 
       <DayTypeToggle dayType={dayType} setDayType={setDayType} />
 
+      {tips && <TipsTodayPanel data={tips} />}
       {insights && <InsightsPanel data={insights} />}
       {mealRisk && <MealRiskPanel data={mealRisk} />}
       {canWrite && <QuickLogPanel onSaved={load} />}

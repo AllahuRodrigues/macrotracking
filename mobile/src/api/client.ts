@@ -177,8 +177,12 @@ export const api = {
     template_id?: string;
     name: string;
     notes?: string;
+    cardio_done?: number;
   }) =>
-    jsonReq<WorkoutSession>("/api/workouts", "POST", { type: "session", data }),
+    jsonReq<WorkoutSession>("/api/workouts", "POST", {
+      type: "session",
+      data: { cardio_done: 0, ...data },
+    }),
 
   upsertSessionExercise: (data: Partial<SessionExercise> & { session_id: string; name: string }) =>
     jsonReq<SessionExercise>("/api/workouts", "POST", { type: "exercise", data }),
@@ -186,10 +190,18 @@ export const api = {
   logSet: async (
     exercise: SessionExercise,
     weight: number,
-    reps: number
+    reps: number,
+    opts?: { rir?: number | null; to_failure?: boolean }
   ): Promise<SessionExercise> => {
     const sets: SessionSet[] = JSON.parse(exercise.sets_data || "[]");
-    sets.push({ set_num: sets.length + 1, weight_lbs: weight, reps, done: true });
+    sets.push({
+      set_num: sets.length + 1,
+      weight_lbs: weight,
+      reps,
+      done: true,
+      rir: opts?.rir ?? null,
+      to_failure: opts?.to_failure ?? false,
+    });
     return req<SessionExercise>(`/api/workouts/${exercise.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -200,12 +212,24 @@ export const api = {
     });
   },
 
+  sessionAction: (sessionId: string, action: "pause" | "resume" | "complete") =>
+    req<WorkoutSession>(`/api/workouts/${sessionId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    }),
+
   markCardio: (sessionId: string, done: boolean, min = 30) =>
     req(`/api/workouts/${sessionId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cardio_done: done ? 1 : 0, cardio_min: done ? min : 0 }),
     }),
+
+  getRituals: (date: string) =>
+    req<{ date: string; done: Record<string, boolean> }>(`/api/rituals?date=${date}`),
+  putRitual: (date: string, ritual_id: string, done: boolean) =>
+    jsonReq("/api/rituals", "PUT", { date, ritual_id, done }),
 
   // Profile
   getProfile: () => req<UserProfile | null>("/api/profile"),
@@ -255,8 +279,16 @@ export const api = {
 
   getInsights: (days = 60) => req<InsightsPayload>(`/api/insights?days=${days}`),
 
-  // Export
-  exportUrl: () => `${API_BASE_URL}/api/export`,
+  getTips: (date?: string) =>
+    req<import("@shared/daily-tips").DailyTipsPayload>(
+      `/api/tips${date ? `?date=${date}` : ""}`
+    ),
+
+  // Export — all history, or ?date=YYYY-MM-DD for a single day dump
+  exportUrl: (date?: string) =>
+    date
+      ? `${API_BASE_URL}/api/export?date=${encodeURIComponent(date)}`
+      : `${API_BASE_URL}/api/export`,
 };
 
 export type AnalyzedFoodItem = {

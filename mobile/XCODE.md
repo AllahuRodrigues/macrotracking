@@ -81,11 +81,47 @@ If the app icon appears but won’t open:
 
 ---
 
-## Rebuild from Terminal (after Xcode signing works once)
+## Use the app with Mac / Terminal OFF (Release build)
+
+**Debug** (default ▶ Run) needs Metro on your Mac (`npx expo start`) — phone talks to `laptop:8081`.
+
+**Release** embeds the JavaScript inside the app. After install you can quit Terminal, sleep the Mac, leave home Wi‑Fi — the app still works (API calls go to Vercel on the internet).
+
+### Option A — Xcode (easiest)
+
+1. Menu **Product → Scheme → Edit Scheme…**
+2. Left: **Run**
+3. **Build Configuration** → change **Debug** to **Release**
+4. Close → unlock phone → ▶ **Run**
+5. Wait for install. Then you can quit Terminal / close the laptop.
+
+To develop again later, switch Build Configuration back to **Debug** and start Metro.
+
+### Option B — Terminal
 
 ```bash
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 cd /Users/allahurodrigues/Desktop/Desktop/My-Desk/PROJECT/macro-tracking/mobile
+npx expo run:ios --device "Rodrigues Iphone" --configuration Release
+```
+
+No Metro needed after that install finishes.
+
+### Still true on free Apple ID
+
+- App still expires ~**7 days** — plug in and ▶ Run again (Release) to renew
+- Phone needs **internet** for logging meals/body (talks to Vercel), but **not** your laptop
+
+---
+
+## Rebuild from Terminal (Debug — needs Metro)
+
+```bash
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+cd /Users/allahurodrigues/Desktop/Desktop/My-Desk/PROJECT/macro-tracking/mobile
+# Terminal 1:
+npx expo start --dev-client --lan
+# Terminal 2 (or Xcode ▶ Run):
 npx expo run:ios --device "Rodrigues Iphone"
 ```
 

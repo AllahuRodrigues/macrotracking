@@ -155,4 +155,22 @@ export async function upsertUserProfile(data: Parameters<typeof sqlite.upsertUse
   return remote() ? supabase.upsertUserProfile(data) : sqlite.upsertUserProfile(data);
 }
 
+export async function getRitualCompletionsForDate(date: string) {
+  if (!remote()) return [];
+  return supabase.getRitualCompletionsForDate(date);
+}
+export async function replaceRitualCompletionsForDate(
+  date: string,
+  doneMap: Record<string, boolean>
+) {
+  if (!remote()) return [];
+  return supabase.replaceRitualCompletionsForDate(date, doneMap);
+}
+export async function upsertRitualCompletion(date: string, ritual_id: string, done: boolean) {
+  if (!remote()) {
+    return { date, ritual_id, done: done ? 1 : 0, updated_at: new Date().toISOString() };
+  }
+  return supabase.upsertRitualCompletion(date, ritual_id, done);
+}
+
 export { useSupabase };

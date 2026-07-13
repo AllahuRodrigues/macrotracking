@@ -183,6 +183,11 @@ export interface SessionSet {
   weight_lbs?: number;
   reps?: number;
   done: boolean;
+  /** Reps in reserve — 0 = near failure, null = not logged */
+  rir?: number | null;
+  /** Taken to technical failure */
+  to_failure?: boolean;
+  notes?: string;
 }
 
 export interface SessionExercise {
@@ -197,6 +202,8 @@ export interface SessionExercise {
   notes?: string;
 }
 
+export type WorkoutSessionStatus = "active" | "paused" | "completed";
+
 export interface WorkoutSession {
   id: string;
   date: string;
@@ -207,6 +214,14 @@ export interface WorkoutSession {
   cardio_min?: number;
   notes?: string;
   created_at: string;
+  /** active | paused | completed — optional for older rows */
+  status?: WorkoutSessionStatus | null;
+  started_at?: string | null;
+  ended_at?: string | null;
+  /** Accumulated pause time in ms */
+  paused_total_ms?: number | null;
+  /** When current pause began */
+  pause_started_at?: string | null;
 }
 
 export interface WaterLog {

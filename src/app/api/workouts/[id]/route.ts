@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteWorkoutSession, updateWorkoutSession, upsertSessionExercise } from "@/lib/db";
+import {
+  deleteWorkoutSession,
+  updateWorkoutSession,
+  upsertSessionExercise,
+  getWorkoutSessions,
+} from "@/lib/db";
+import { applyTimerAction } from "@/lib/session-timer";
+import type { WorkoutSession } from "@/lib/types";
+
+async function getSessionById(id: string): Promise<WorkoutSession | null> {
+  const sessions = await getWorkoutSessions(100);
+  return sessions.find((s) => s.id === id) ?? null;
+}
 
 export async function PUT(
   req: NextRequest,
@@ -11,6 +23,15 @@ export async function PUT(
   if (body.type === "exercise") {
     const ex = await upsertSessionExercise({ ...body.data, id });
     return NextResponse.json(ex);
+  }
+
+  if (body.action === "pause" || body.action === "resume" || body.action === "complete") {
+    const current = await getSessionById(id);
+    if (!current) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const patch = applyTimerAction(current, body.action);
+    const updated = await updateWorkoutSession(id, patch);
+    if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(updated);
   }
 
   const updated = await updateWorkoutSession(id, body);

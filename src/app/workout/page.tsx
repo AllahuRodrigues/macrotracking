@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Dumbbell, Droplets, CheckCircle2, Circle, ChevronDown, ChevronUp,
   Play, History, LayoutList, Plus, Minus, RotateCcw,
-  Clock, Flame,
+  Clock, Flame, Pause, Square,
 } from "lucide-react";
 import type {
   WorkoutTemplate, TemplateExercise, WorkoutSession, SessionExercise, SessionSet,
@@ -12,6 +12,12 @@ import type {
 import { WATER_GOAL_ML } from "@/lib/types";
 import { formatDateMedium, todayISO, weekdayIndexISO } from "@/lib/utils";
 import { Card, Button } from "@/components/ui";
+import {
+  getTimerState,
+  elapsedActiveSeconds,
+  formatElapsed,
+  userNotesFromSession,
+} from "@/lib/session-timer";
 
 type Tab = "today" | "history" | "program";
 
@@ -31,7 +37,6 @@ export default function WorkoutPage() {
   const [history, setHistory] = useState<WorkoutSession[]>([]);
   const [allTemplates, setAllTemplates] = useState<{ template: WorkoutTemplate; exercises: TemplateExercise[] }[]>([]);
   const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
-  const [startTime, setStartTime] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
 
   const loadToday = useCallback(async () => {
@@ -89,14 +94,19 @@ export default function WorkoutPage() {
   useEffect(() => { if (tab === "history") loadHistory(); }, [tab, loadHistory]);
   useEffect(() => { if (tab === "program") loadProgram(); }, [tab, loadProgram]);
 
-  // Session timer
+  const timer = session ? getTimerState(session) : null;
+
+  // Session timer from persisted state
   useEffect(() => {
-    if (!startTime) return;
-    const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - new Date(startTime).getTime()) / 1000));
-    }, 1000);
+    if (!timer || timer.status === "completed") {
+      if (timer?.status === "completed") setElapsed(elapsedActiveSeconds(timer));
+      return;
+    }
+    const tick = () => setElapsed(elapsedActiveSeconds(timer));
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, [session?.id, timer?.status, timer?.started_at, timer?.paused_total_ms, timer?.pause_started_at]);
 
   async function startSession() {
     if (!template) return;
@@ -110,9 +120,7 @@ export default function WorkoutPage() {
     });
     const newSession: WorkoutSession = await res.json();
     setSession(newSession);
-    setStartTime(new Date().toISOString());
 
-    // Pre-populate exercises from template
     const exData = templateExercises.map((te, i) => ({
       session_id: newSession.id,
       template_exercise_id: te.id,
@@ -134,9 +142,32 @@ export default function WorkoutPage() {
     loadToday();
   }
 
-  async function logSet(exId: string, currentSetsData: string, weight: number, reps: number) {
+  async function sessionAction(action: "pause" | "resume" | "complete") {
+    if (!session) return;
+    await fetch(`/api/workouts/${session.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    loadToday();
+  }
+
+  async function logSet(
+    exId: string,
+    currentSetsData: string,
+    weight: number,
+    reps: number,
+    opts?: { rir?: number | null; to_failure?: boolean }
+  ) {
     const sets: SessionSet[] = JSON.parse(currentSetsData || "[]");
-    sets.push({ set_num: sets.length + 1, weight_lbs: weight, reps, done: true });
+    sets.push({
+      set_num: sets.length + 1,
+      weight_lbs: weight,
+      reps,
+      done: true,
+      rir: opts?.to_failure ? 0 : opts?.rir ?? null,
+      to_failure: opts?.to_failure ?? false,
+    });
     await fetch(`/api/workouts/${exId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -171,7 +202,6 @@ export default function WorkoutPage() {
   }
 
   const waterPct = Math.min(100, Math.round((waterMl / WATER_GOAL_ML) * 100));
-  const fmtTime = (s: number) => `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
 
   return (
     <div className="space-y-4">
@@ -180,10 +210,13 @@ export default function WorkoutPage() {
           <h1 className="text-2xl font-bold tracking-tight">Workout</h1>
           <p className="text-sm text-[var(--muted)]">{DAY_NAMES[today]} · {formatDateMedium(date)} · Fitness SF</p>
         </div>
-        {session && startTime && (
+        {session && timer && (
           <div className="flex items-center gap-1.5 rounded-lg bg-[var(--accent)]/10 px-3 py-1.5">
             <Clock size={14} className="text-[var(--accent)]" />
-            <span className="text-sm font-semibold text-[var(--accent)]">{fmtTime(elapsed)}</span>
+            <span className="text-sm font-semibold text-[var(--accent)]">{formatElapsed(elapsed)}</span>
+            {timer.status === "paused" && (
+              <span className="text-[10px] font-bold uppercase text-[var(--accent-warm)]">Paused</span>
+            )}
           </div>
         )}
       </div>
@@ -259,6 +292,20 @@ export default function WorkoutPage() {
                       <Play size={14} /> Start
                     </Button>
                   )}
+                  {session && timer?.status !== "completed" && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        onClick={() => sessionAction(timer?.status === "paused" ? "resume" : "pause")}
+                      >
+                        {timer?.status === "paused" ? <Play size={14} /> : <Pause size={14} />}
+                        {timer?.status === "paused" ? "Resume" : "Pause"}
+                      </Button>
+                      <Button onClick={() => sessionAction("complete")}>
+                        <Square size={14} /> Finish
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Cardio */}
@@ -299,7 +346,9 @@ export default function WorkoutPage() {
                       sessionActive={!!useSession}
                       expanded={expandedExercise === ex.id}
                       onToggle={() => setExpandedExercise(expandedExercise === ex.id ? null : ex.id)}
-                      onLogSet={(w, r) => logSet(ex.id, (ex as SessionExercise).sets_data ?? "[]", w, r)}
+                      onLogSet={(w, r, opts) =>
+                        logSet(ex.id, (ex as SessionExercise).sets_data ?? "[]", w, r, opts)
+                      }
                     />
                   ));
                 })()}
@@ -323,26 +372,53 @@ export default function WorkoutPage() {
           {history.length === 0 ? (
             <Card><p className="py-8 text-center text-sm text-[var(--muted)]">No workout history yet. Start your first session.</p></Card>
           ) : (
-            history.map((s) => (
-              <Card key={s.id}>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-semibold text-sm">{s.name}</p>
-                    <p className="text-xs text-[var(--muted)]">{s.date}</p>
-                  </div>
-                  <div className="flex gap-3 text-right text-xs">
-                    {s.duration_min && <div><p className="text-[var(--muted)]">Duration</p><p className="font-semibold">{s.duration_min} min</p></div>}
+            history.map((s) => {
+              const t = getTimerState(s);
+              const note = userNotesFromSession(s.notes);
+              return (
+                <Card key={s.id}>
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[var(--muted)]">Cardio</p>
-                      <p className={s.cardio_done ? "font-semibold text-[var(--accent)]" : "text-[var(--muted)]"}>
-                        {s.cardio_done ? `✓ ${s.cardio_min ?? 60} min` : "—"}
+                      <p className="font-semibold text-sm">{s.name}</p>
+                      <p className="text-xs text-[var(--muted)]">
+                        {s.date}
+                        {t ? ` · ${formatElapsed(elapsedActiveSeconds(t))}` : ""}
                       </p>
+                      {note ? (
+                        <p className="mt-1 text-xs text-[var(--muted)]">{note}</p>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-col items-end gap-1 text-right text-xs">
+                      {t?.status === "completed" ? (
+                        <span className="font-semibold text-[var(--accent)]">Done</span>
+                      ) : t?.status === "paused" ? (
+                        <span className="font-semibold text-[var(--accent-warm)]">Paused</span>
+                      ) : t?.status === "active" ? (
+                        <span className="font-semibold text-[var(--accent)]">Live</span>
+                      ) : null}
+                      {s.duration_min ? (
+                        <div>
+                          <p className="text-[var(--muted)]">Logged</p>
+                          <p className="font-semibold">{s.duration_min} min</p>
+                        </div>
+                      ) : null}
+                      <div>
+                        <p className="text-[var(--muted)]">Cardio</p>
+                        <p
+                          className={
+                            s.cardio_done
+                              ? "font-semibold text-[var(--accent)]"
+                              : "text-[var(--muted)]"
+                          }
+                        >
+                          {s.cardio_done ? `✓ ${s.cardio_min ?? 60} min` : "—"}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-                {s.notes && <p className="mt-1 text-xs text-[var(--muted)]">{s.notes}</p>}
-              </Card>
-            ))
+                </Card>
+              );
+            })
           )}
         </div>
       )}
@@ -366,7 +442,7 @@ interface ExerciseRowProps {
   sessionActive: boolean;
   expanded: boolean;
   onToggle: () => void;
-  onLogSet: (weight: number, reps: number) => void;
+  onLogSet: (weight: number, reps: number, opts?: { rir?: number | null; to_failure?: boolean }) => void;
 }
 
 function ExerciseRow({ ex, sessionActive, expanded, onToggle, onLogSet }: ExerciseRowProps) {
@@ -379,6 +455,8 @@ function ExerciseRow({ ex, sessionActive, expanded, onToggle, onLogSet }: Exerci
   const defaultReps = parseInt((ex.reps_prescribed?.split("–")[0] ?? "8")) || 8;
   const [weight, setWeight] = useState(lastSet?.weight_lbs ?? 0);
   const [reps, setReps] = useState(lastSet?.reps ?? defaultReps);
+  const [rir, setRir] = useState(2);
+  const [toFailure, setToFailure] = useState(false);
 
   return (
     <div className={`rounded-lg border transition-colors ${complete ? "border-[var(--accent)]/30 bg-[var(--accent)]/5" : "border-[var(--card-border)] bg-[var(--background)]"}`}>
@@ -415,6 +493,11 @@ function ExerciseRow({ ex, sessionActive, expanded, onToggle, onLogSet }: Exerci
                   <span className="font-semibold">{s.weight_lbs} lbs</span>
                   <span className="text-[var(--muted)]">×</span>
                   <span className="font-semibold">{s.reps} reps</span>
+                  {s.to_failure ? (
+                    <span className="font-bold text-red-400">FAIL</span>
+                  ) : s.rir != null ? (
+                    <span className="text-[var(--muted)]">RIR {s.rir}</span>
+                  ) : null}
                   <CheckCircle2 size={12} className="text-[var(--accent)]" />
                 </div>
               ))}
@@ -423,36 +506,71 @@ function ExerciseRow({ ex, sessionActive, expanded, onToggle, onLogSet }: Exerci
 
           {/* Log new set */}
           {sessionActive && (
-            <div className="flex items-end gap-2">
-              <label className="block space-y-1 flex-1">
-                <span className="text-[10px] text-[var(--muted)]">Weight (lbs)</span>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => setWeight(Math.max(0, weight - 5))} className="rounded bg-[var(--card-border)] p-1"><Minus size={12} /></button>
-                  <input
-                    type="number"
-                    value={weight}
-                    onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
-                    className="w-full rounded border border-[var(--card-border)] bg-[var(--background)] px-2 py-1 text-center text-sm"
-                  />
-                  <button onClick={() => setWeight(weight + 5)} className="rounded bg-[var(--card-border)] p-1"><Plus size={12} /></button>
-                </div>
-              </label>
-              <label className="block space-y-1 flex-1">
-                <span className="text-[10px] text-[var(--muted)]">Reps</span>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => setReps(Math.max(1, reps - 1))} className="rounded bg-[var(--card-border)] p-1"><Minus size={12} /></button>
-                  <input
-                    type="number"
-                    value={reps}
-                    onChange={(e) => setReps(parseInt(e.target.value) || 1)}
-                    className="w-full rounded border border-[var(--card-border)] bg-[var(--background)] px-2 py-1 text-center text-sm"
-                  />
-                  <button onClick={() => setReps(reps + 1)} className="rounded bg-[var(--card-border)] p-1"><Plus size={12} /></button>
-                </div>
-              </label>
-              <Button onClick={() => onLogSet(weight, reps)} className="shrink-0">
-                <CheckCircle2 size={14} /> Log
-              </Button>
+            <div className="space-y-2">
+              <div className="flex items-end gap-2">
+                <label className="block space-y-1 flex-1">
+                  <span className="text-[10px] text-[var(--muted)]">Weight (lbs)</span>
+                  <div className="flex items-center gap-1">
+                    <button type="button" onClick={() => setWeight(Math.max(0, weight - 5))} className="rounded bg-[var(--card-border)] p-1"><Minus size={12} /></button>
+                    <input
+                      type="number"
+                      value={weight}
+                      onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
+                      className="w-full rounded border border-[var(--card-border)] bg-[var(--background)] px-2 py-1 text-center text-sm"
+                    />
+                    <button type="button" onClick={() => setWeight(weight + 5)} className="rounded bg-[var(--card-border)] p-1"><Plus size={12} /></button>
+                  </div>
+                </label>
+                <label className="block space-y-1 flex-1">
+                  <span className="text-[10px] text-[var(--muted)]">Reps</span>
+                  <div className="flex items-center gap-1">
+                    <button type="button" onClick={() => setReps(Math.max(1, reps - 1))} className="rounded bg-[var(--card-border)] p-1"><Minus size={12} /></button>
+                    <input
+                      type="number"
+                      value={reps}
+                      onChange={(e) => setReps(parseInt(e.target.value) || 1)}
+                      className="w-full rounded border border-[var(--card-border)] bg-[var(--background)] px-2 py-1 text-center text-sm"
+                    />
+                    <button type="button" onClick={() => setReps(reps + 1)} className="rounded bg-[var(--card-border)] p-1"><Plus size={12} /></button>
+                  </div>
+                </label>
+                <Button
+                  onClick={() => onLogSet(weight, reps, { rir: toFailure ? 0 : rir, to_failure: toFailure })}
+                  className="shrink-0"
+                >
+                  <CheckCircle2 size={14} /> Log
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {[0, 1, 2, 3].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => {
+                      setToFailure(false);
+                      setRir(n);
+                    }}
+                    className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                      !toFailure && rir === n
+                        ? "border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--accent)]"
+                        : "border-[var(--card-border)] text-[var(--muted)]"
+                    }`}
+                  >
+                    RIR {n}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setToFailure(!toFailure)}
+                  className={`rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                    toFailure
+                      ? "border-red-400 bg-red-400/15 text-red-400"
+                      : "border-[var(--card-border)] text-[var(--muted)]"
+                  }`}
+                >
+                  To failure
+                </button>
+              </div>
             </div>
           )}
         </div>

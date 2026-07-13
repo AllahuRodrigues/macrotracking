@@ -253,17 +253,27 @@ export default function ProfilePage() {
       </div>
 
       <Card title="Export data">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3">
           <p className="text-sm text-[var(--muted)]">
-            Download meals, body, workouts, program, supplements, and photos as one JSON file.
+            Download meals, body, workouts + every set (weight/reps/RIR/failure), check-ins, water,
+            supplements taken, and rituals — as JSON.
           </p>
-          <a
-            href="/api/export"
-            download
-            className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90"
-          >
-            <Download size={15} /> Export all data
-          </a>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="/api/export"
+              download
+              className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+            >
+              <Download size={15} /> Export all (120d)
+            </a>
+            <a
+              href={`/api/export?date=${todayISO()}`}
+              download
+              className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg border border-[var(--card-border)] px-4 py-2.5 text-sm font-semibold text-[var(--foreground)] hover:border-[var(--accent)]/40"
+            >
+              <Download size={15} /> Today only
+            </a>
+          </div>
         </div>
       </Card>
     </div>

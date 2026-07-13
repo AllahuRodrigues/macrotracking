@@ -43,10 +43,6 @@ export function RitualsPanel({ date = todayISO() }: { date?: string }) {
     setDone(store[date] ?? {});
   }, [date]);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
   function toggle(id: string) {
     const store = loadStore();
     const day = { ...(store[date] ?? {}) };
@@ -54,13 +50,39 @@ export function RitualsPanel({ date = todayISO() }: { date?: string }) {
     store[date] = day;
     saveStore(store);
     setDone(day);
+    fetch("/api/rituals", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, ritual_id: id, done: day[id] }),
+    }).catch(() => undefined);
   }
+
+  useEffect(() => {
+    refresh();
+    fetch(`/api/rituals?date=${date}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.done && typeof data.done === "object") {
+          const merged = { ...(loadStore()[date] ?? {}), ...data.done };
+          const store = loadStore();
+          store[date] = merged;
+          saveStore(store);
+          setDone(merged);
+        }
+      })
+      .catch(() => undefined);
+  }, [date, refresh]);
 
   function clearDay() {
     const store = loadStore();
     store[date] = {};
     saveStore(store);
     setDone({});
+    fetch("/api/rituals", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, done: {} }),
+    }).catch(() => undefined);
   }
 
   const progress = dailyRitualProgress(done);

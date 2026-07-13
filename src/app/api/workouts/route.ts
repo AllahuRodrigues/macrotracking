@@ -3,6 +3,7 @@ import {
   createWorkoutSession, getSessionExercises, getSessionForDate,
   getWorkoutSessions, upsertSessionExercise,
 } from "@/lib/db";
+import { initialTimerFields } from "@/lib/session-timer";
 
 export async function GET(req: NextRequest) {
   const date = req.nextUrl.searchParams.get("date");
@@ -23,7 +24,13 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
 
   if (body.type === "session") {
-    const session = await createWorkoutSession(body.data);
+    const timer = initialTimerFields();
+    const session = await createWorkoutSession({
+      cardio_done: 0,
+      ...body.data,
+      ...timer,
+      notes: timer.notes,
+    });
     return NextResponse.json(session, { status: 201 });
   }
 

@@ -38,20 +38,21 @@ export default function Profile() {
   const phase = planPhaseFor(iso);
   const activeDay = planActiveDayCount(iso);
 
-  async function exportData() {
+  async function exportData(scope: "all" | "today" = "all") {
     setExporting(true);
     try {
       const code = await getAccessCode();
-      const dest = `${FileSystem.cacheDirectory}macrotrack-export-${new Date()
-        .toISOString()
-        .slice(0, 10)}.json`;
-      const res = await FileSystem.downloadAsync(api.exportUrl(), dest, {
+      const day = scope === "today" ? todayISO() : undefined;
+      const dest = `${FileSystem.cacheDirectory}${
+        day ? `macrotrack-day-${day}` : `macrotrack-export-${todayISO()}`
+      }.json`;
+      const res = await FileSystem.downloadAsync(api.exportUrl(day), dest, {
         headers: code ? { [ACCESS_CODE_HEADER]: code } : undefined,
       });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(res.uri, {
           mimeType: "application/json",
-          dialogTitle: "Export MacroTrack data",
+          dialogTitle: day ? `Export ${day}` : "Export MacroTrack data",
           UTI: "public.json",
         });
       } else {
@@ -226,9 +227,21 @@ export default function Profile() {
             Export data
           </AppText>
           <AppText muted size={13} style={{ marginBottom: 12 }}>
-            Download meals, body, workouts, supplements, program as JSON.
+            Meals, body, workouts + sets (weight/reps/RIR/failure), check-ins, water, supplements,
+            rituals done & missed — same JSON as the website.
           </AppText>
-          <Button label={exporting ? "Preparing…" : "Export all data"} loading={exporting} onPress={exportData} />
+          <Button
+            label={exporting ? "Preparing…" : "Export all data"}
+            loading={exporting}
+            onPress={() => exportData("all")}
+          />
+          <View style={{ height: 8 }} />
+          <Button
+            label="Export today only"
+            variant="ghost"
+            disabled={exporting}
+            onPress={() => exportData("today")}
+          />
         </Card>
 
         <Card style={{ marginBottom: 14 }}>

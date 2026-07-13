@@ -17,6 +17,7 @@ import {
 } from "@shared/rituals";
 import { Card, AppText, Row, ScreenTitle, Button } from "@/components/ui";
 import { theme } from "@/lib/theme";
+import { api } from "@/api/client";
 
 const STORAGE_KEY = "macro_rituals_v1";
 
@@ -37,6 +38,12 @@ async function saveStore(store: Store) {
   await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(store));
 }
 
+async function saveStoreLocal(date: string, day: Record<string, boolean>) {
+  const store = await loadStore();
+  store[date] = day;
+  await saveStore(store);
+}
+
 const CATS = (Object.keys(RITUAL_CATEGORY_META) as RitualCategory[]).filter((c) => c !== "kit");
 
 export default function RitualsScreen() {
@@ -44,29 +51,37 @@ export default function RitualsScreen() {
   const [tab, setTab] = useState<Tab>("today");
   const [done, setDone] = useState<Record<string, boolean>>({});
 
-  const refresh = useCallback(async () => {
-    const store = await loadStore();
-    setDone(store[date] ?? {});
+  useEffect(() => {
+    (async () => {
+      const store = await loadStore();
+      let merged = store[date] ?? {};
+      try {
+        const data = await api.getRituals(date);
+        if (data?.done) {
+          merged = { ...merged, ...data.done };
+          await saveStoreLocal(date, merged);
+        }
+      } catch {
+        /* offline */
+      }
+      setDone(merged);
+    })();
   }, [date]);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
   const toggle = async (id: string) => {
-    const store = await loadStore();
-    const day = { ...(store[date] ?? {}) };
-    day[id] = !day[id];
-    store[date] = day;
-    await saveStore(store);
-    setDone(day);
+    const next = { ...done, [id]: !done[id] };
+    setDone(next);
+    await saveStoreLocal(date, next);
     Haptics.selectionAsync();
+    try {
+      await api.putRitual(date, id, !!next[id]);
+    } catch {
+      /* offline ok */
+    }
   };
 
   const clearDay = async () => {
-    const store = await loadStore();
-    store[date] = {};
-    await saveStore(store);
+    await saveStoreLocal(date, {});
     setDone({});
   };
 

@@ -843,3 +843,64 @@ export async function upsertUserProfile(
   if (error) throw error;
   return profile;
 }
+
+// ── Ritual completions ──
+
+export type RitualCompletion = {
+  date: string;
+  ritual_id: string;
+  done: number;
+  updated_at: string;
+};
+
+export async function getRitualCompletionsForDate(date: string): Promise<RitualCompletion[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("ritual_completions")
+    .select("*")
+    .eq("date", date);
+  if (error) {
+    // Table may not exist yet
+    console.warn("ritual_completions:", error.message);
+    return [];
+  }
+  return (data ?? []) as RitualCompletion[];
+}
+
+export async function upsertRitualCompletion(
+  date: string,
+  ritual_id: string,
+  done: boolean
+): Promise<RitualCompletion> {
+  const supabase = getSupabase();
+  const row: RitualCompletion = {
+    date,
+    ritual_id,
+    done: done ? 1 : 0,
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await supabase.from("ritual_completions").upsert(row, {
+    onConflict: "date,ritual_id",
+  });
+  if (error) throw error;
+  return row;
+}
+
+export async function replaceRitualCompletionsForDate(
+  date: string,
+  doneMap: Record<string, boolean>
+): Promise<RitualCompletion[]> {
+  const rows = Object.entries(doneMap).map(([ritual_id, done]) => ({
+    date,
+    ritual_id,
+    done: done ? 1 : 0,
+    updated_at: new Date().toISOString(),
+  }));
+  const supabase = getSupabase();
+  await supabase.from("ritual_completions").delete().eq("date", date);
+  if (rows.length) {
+    const { error } = await supabase.from("ritual_completions").upsert(rows);
+    if (error) throw error;
+  }
+  return rows;
+}
